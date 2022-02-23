@@ -8,7 +8,7 @@ package bot
 	}
 
 	if roomConfig.AlertChannel == nil {
-		roomPLState, err := GetRoomState(matrixClient, id.RoomID(room))
+		roomPLState, err := GetRoomPowerLevelState(matrixClient, id.RoomID(room))
 		if err != nil {
 			log.Printf("Failed to get room power levels - %v", err)
 			return

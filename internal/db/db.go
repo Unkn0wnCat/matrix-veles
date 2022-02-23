@@ -108,3 +108,51 @@ func GetListByID(id primitive.ObjectID) (*model.DBHashList, error) {
 
 	return &object, nil
 }
+
+func SaveUser(user *model.DBUser) error {
+	db := DbClient.Database(viper.GetString("bot.mongo.database"))
+
+	opts := options.Replace().SetUpsert(true)
+
+	filter := bson.D{{"_id", user.ID}}
+
+	_, err := db.Collection(viper.GetString("bot.mongo.collection.users")).ReplaceOne(context.TODO(), filter, user, opts)
+
+	return err
+}
+
+func GetUserByID(id primitive.ObjectID) (*model.DBUser, error) {
+	db := DbClient.Database(viper.GetString("bot.mongo.database"))
+
+	res := db.Collection(viper.GetString("bot.mongo.collection.users")).FindOne(context.TODO(), bson.D{{"_id", id}})
+	if res.Err() != nil {
+		return nil, res.Err()
+	}
+
+	object := model.DBUser{}
+
+	err := res.Decode(&object)
+	if err != nil {
+		return nil, err
+	}
+
+	return &object, nil
+}
+
+func GetUserByUsername(username string) (*model.DBUser, error) {
+	db := DbClient.Database(viper.GetString("bot.mongo.database"))
+
+	res := db.Collection(viper.GetString("bot.mongo.collection.users")).FindOne(context.TODO(), bson.D{{"username", username}})
+	if res.Err() != nil {
+		return nil, res.Err()
+	}
+
+	object := model.DBUser{}
+
+	err := res.Decode(&object)
+	if err != nil {
+		return nil, err
+	}
+
+	return &object, nil
+}

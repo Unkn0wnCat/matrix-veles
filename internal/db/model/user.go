@@ -2,14 +2,20 @@ package model
 
 import (
 	"encoding/base64"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type DBUser struct {
-	Username       string `bson:"username" json:"username"`
-	HashedPassword string `bson:"password" json:"password"`
+	ID primitive.ObjectID `bson:"_id" json:"id"`
 
-	Password *string `bson:"-" json:"-"`
+	Username       string `bson:"username" json:"username"` // Username is the username the user has
+	HashedPassword string `bson:"password" json:"password"` // HashedPassword contains the bcrypt-ed password
+
+	MatrixLinks        []*string `bson:"matrix_links" json:"matrix_links"`                 // MatrixLinks is the matrix-users this user has verified ownership over
+	PendingMatrixLinks []*string `bson:"pending_matrix_links" json:"pending_matrix_links"` // PendingMatrixLinks is the matrix-users pending verification
+
+	Password *string `bson:"-" json:"-"` // Password may never be sent out!
 }
 
 func (usr *DBUser) HashPassword() error {
@@ -23,6 +29,7 @@ func (usr *DBUser) HashPassword() error {
 	}
 
 	usr.HashedPassword = base64.StdEncoding.EncodeToString(hash)
+	usr.Password = nil
 	return nil
 }
 

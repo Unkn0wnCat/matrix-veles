@@ -158,19 +158,20 @@ func handleMessageEvent(matrixClient *mautrix.Client, startTs int64) mautrix.Eve
 		}
 
 		if content.URL != "" {
-			handleHashing(content, evt, matrixClient)
-
+			// This has an attachment!
+			handleHashing(content, evt, matrixClient) // -> handleHashing.go
 			return
 		}
 
+		// No attachment, is this a command?
 		if !strings.HasPrefix(content.Body, "!"+username) &&
 			!strings.HasPrefix(content.Body, "@"+username) &&
 			!(strings.HasPrefix(content.Body, username) && strings.HasPrefix(content.FormattedBody, "<a href=\"https://matrix.to/#/"+matrixClient.UserID.String()+"\">")) {
 			return
 		}
 
-		handleCommand(content.Body, evt.Sender, evt.RoomID, matrixClient)
-
+		// It is a command!
+		handleCommand(content.Body, evt.Sender, evt.RoomID, matrixClient) // -> commandParser.go
 	}
 }
 

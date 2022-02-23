@@ -20,6 +20,7 @@ package cmd
 import (
 	"github.com/Unkn0wnCat/matrix-veles/internal/bot"
 	"github.com/Unkn0wnCat/matrix-veles/internal/db"
+	"github.com/Unkn0wnCat/matrix-veles/internal/web"
 
 	"github.com/spf13/cobra"
 )
@@ -33,6 +34,7 @@ var runCmd = &cobra.Command{
 The bot will log in to the homeserver and start posting updates to subscribed channels.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		db.Connect()
+		go web.StartServer()
 		bot.Run()
 	},
 }

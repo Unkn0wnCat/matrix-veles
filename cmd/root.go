@@ -58,6 +58,9 @@ func init() {
 	viper.SetDefault("bot.mongo.collection.entries", "entries")
 	viper.SetDefault("bot.mongo.collection.lists", "lists")
 	viper.SetDefault("bot.mongo.collection.rooms", "rooms")
+	viper.SetDefault("bot.mongo.collection.users", "users")
+	viper.SetDefault("bot.web.listen", "127.0.0.1:8123")
+	viper.SetDefault("bot.web.secret", "hunter2")
 
 	cobra.OnInitialize(loadConfig)
 }
@@ -74,5 +77,9 @@ func loadConfig() {
 
 	if err := viper.ReadInConfig(); err == nil {
 		log.Println("Using config file:", viper.ConfigFileUsed())
+	}
+
+	if viper.GetString("bot.web.secret") == "hunter2" {
+		log.Println("Web secret is not set! YOUR INSTALLATION IS INSECURE!")
 	}
 }

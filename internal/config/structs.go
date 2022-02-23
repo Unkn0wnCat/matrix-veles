@@ -35,16 +35,21 @@ type RoomConfig struct {
 	// Debug specifies if the bot shall run in dry run mode
 	Debug bool `yaml:"debug" bson:"debug"`
 
+	// AlertChannel is currently unused
 	AlertChannel *string `bson:"alert_channel"`
 
+	// AdminPowerLevel specifies the power-level a user has to have to manage the room
 	AdminPowerLevel int `bson:"admin_power_level"`
 
+	// HashChecker contains configuration specific to the hash-checker
 	HashChecker HashCheckerConfig `bson:"hash_checker"`
 }
 
 type HashCheckerConfig struct {
+	// NoticeToChat specifies weather or not to post a public notice to chat
 	NoticeToChat bool `bson:"chat_notice"`
 
+	// NotificationPowerLevel is currently unused
 	NotificationPowerLevel int `yaml:"notification_level" bson:"notification_level"`
 
 	/*
@@ -58,5 +63,6 @@ type HashCheckerConfig struct {
 	*/
 	HashCheckMode uint8 `yaml:"mode" bson:"hash_check_mode"`
 
+	// SubscribedLists contains the lists this room is subscribed to
 	SubscribedLists []*primitive.ObjectID `bson:"subscribed_lists" json:"subscribed_lists"`
 }
