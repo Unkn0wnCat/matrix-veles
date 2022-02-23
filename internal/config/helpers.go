@@ -42,7 +42,7 @@ func SetRoomConfigActive(id string, active bool) {
 	roomConfigWg.Add(1)
 
 	roomConfig := GetRoomConfig(id)
-	roomConfig.Active = true
+	roomConfig.Active = active
 
 	err := SaveRoomConfig(&roomConfig)
 	if err != nil {
@@ -67,9 +67,9 @@ func GetRoomConfig(id string) RoomConfig {
 
 // RoomConfigInitialUpdate updates all RoomConfig entries to set activity and create blank configs
 func RoomConfigInitialUpdate(ids []id.RoomID) {
-	db := db.DbClient.Database(viper.GetString("bot.mongo.database"))
+	database := db.DbClient.Database(viper.GetString("bot.mongo.database"))
 
-	cursor, err := db.Collection("rooms").Find(context.TODO(), bson.D{}, nil)
+	cursor, err := database.Collection("rooms").Find(context.TODO(), bson.D{}, nil)
 	if err != nil {
 		log.Panicf("Error querying room configs: %v", err)
 	}
@@ -105,7 +105,8 @@ func AddRoomConfig(id string) RoomConfig {
 	roomConfigWg.Wait()
 	roomConfigWg.Add(1)
 
-	config := RoomConfig{ID: primitive.NewObjectID(), Active: true, RoomID: id}
+	config := GetDefaultRoomConfig()
+	config.RoomID = id
 
 	err := SaveRoomConfig(&config)
 	if err != nil {
@@ -119,26 +120,26 @@ func AddRoomConfig(id string) RoomConfig {
 }
 
 func SaveRoomConfig(roomConfig *RoomConfig) error {
-	db := db.DbClient.Database(viper.GetString("bot.mongo.database"))
+	database := db.DbClient.Database(viper.GetString("bot.mongo.database"))
 
 	opts := options.Replace().SetUpsert(true)
 
 	filter := bson.D{{"room_id", roomConfig.RoomID}}
 
-	_, err := db.Collection("rooms").ReplaceOne(context.TODO(), filter, roomConfig, opts)
+	_, err := database.Collection(viper.GetString("bot.mongo.collection.rooms")).ReplaceOne(context.TODO(), filter, roomConfig, opts)
 
 	return err
 }
 
 func GetRoomConfigByRoomID(id string) (*RoomConfig, error) {
-	db := db.DbClient.Database(viper.GetString("bot.mongo.database"))
+	database := db.DbClient.Database(viper.GetString("bot.mongo.database"))
 
-	res := db.Collection("rooms").FindOne(context.TODO(), bson.D{{"room_id", id}})
+	res := database.Collection(viper.GetString("bot.mongo.collection.rooms")).FindOne(context.TODO(), bson.D{{"room_id", id}})
 	if res.Err() != nil {
 		return nil, res.Err()
 	}
 
-	object := RoomConfig{}
+	object := GetDefaultRoomConfig()
 
 	err := res.Decode(&object)
 	if err != nil {
@@ -146,4 +147,19 @@ func GetRoomConfigByRoomID(id string) (*RoomConfig, error) {
 	}
 
 	return &object, nil
+}
+
+func GetDefaultRoomConfig() RoomConfig {
+	return RoomConfig{
+		ID:              primitive.NewObjectID(),
+		Active:          true,
+		RoomID:          "",
+		Debug:           false,
+		AdminPowerLevel: 100,
+		HashChecker: HashCheckerConfig{
+			NoticeToChat:           true,
+			NotificationPowerLevel: 50,
+			HashCheckMode:          1,
+		},
+	}
 }

@@ -18,7 +18,6 @@
 package cmd
 
 import (
-	"github.com/Unkn0wnCat/matrix-veles/internal/config"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -49,13 +48,16 @@ func Execute() {
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./config.yaml)")
 
-	viper.SetDefault("bot.homeserver", "https://matrix.org")
+	viper.SetDefault("bot.homeserver", "matrix.org")
+	viper.SetDefault("bot.homeserver_url", "https://matrix.org")
 	viper.SetDefault("bot.username", "")
 	viper.SetDefault("bot.password", "")
 	viper.SetDefault("bot.accessKey", "")
-	viper.SetDefault("bot.rooms", config.RoomConfigTree{})
 	viper.SetDefault("bot.mongo.uri", "mongodb://localhost:27017")
 	viper.SetDefault("bot.mongo.database", "veles")
+	viper.SetDefault("bot.mongo.collection.entries", "entries")
+	viper.SetDefault("bot.mongo.collection.lists", "lists")
+	viper.SetDefault("bot.mongo.collection.rooms", "rooms")
 
 	cobra.OnInitialize(loadConfig)
 }

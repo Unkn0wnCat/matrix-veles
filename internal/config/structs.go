@@ -35,14 +35,28 @@ type RoomConfig struct {
 	// Debug specifies if the bot shall run in dry run mode
 	Debug bool `yaml:"debug" bson:"debug"`
 
+	AlertChannel *string `bson:"alert_channel"`
+
+	AdminPowerLevel int `bson:"admin_power_level"`
+
+	HashChecker HashCheckerConfig `bson:"hash_checker"`
+}
+
+type HashCheckerConfig struct {
+	NoticeToChat bool `bson:"chat_notice"`
+
+	NotificationPowerLevel int `yaml:"notification_level" bson:"notification_level"`
+
 	/*
 		HashCheckMode specifies the mode the bot should operate under in this room
 
 		HashCheck-Modes:
-		 0. Silent Mode (Don't do anything)
-		 1. Notify Mode (Message Room Admins & Mods)
-		 2. Mute Mode (Remove message, notify admin & mute user)
-		 3. Ban Mode (Remove message, notify admin & ban user)
+		 0. Notice Mode (Post notice)
+		 1. Delete Mode (Remove message, post notice)
+		 2. Mute Mode (Remove message, post notice & mute user)
+		 3. Ban Mode (Remove message, post notice & ban user)
 	*/
 	HashCheckMode uint8 `yaml:"mode" bson:"hash_check_mode"`
+
+	SubscribedLists []*primitive.ObjectID `bson:"subscribed_lists" json:"subscribed_lists"`
 }

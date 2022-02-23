@@ -15,7 +15,6 @@ import (
 	"log"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
-	"maunium.net/go/mautrix/id"
 )
 
 func handleHashing(content *event.MessageEventContent, evt *event.Event, matrixClient *mautrix.Client) {
@@ -86,6 +85,36 @@ func handleHashing(content *event.MessageEventContent, evt *event.Event, matrixC
 		matrixClient.SendNotice(evt.RoomID, fmt.Sprintf("DEBUG:\n%s", buf.String()))
 	}
 
+	if roomConfig.HashChecker.SubscribedLists == nil {
+		log.Printf("Room %s is not subscribed to any lists!", roomConfig.RoomID)
+		return // Not subscribed to any lists
+	}
+
+	subMap := make(map[string]bool)
+
+	for _, listId := range roomConfig.HashChecker.SubscribedLists {
+		subMap[listId.Hex()] = true
+	}
+
+	found := false
+	log.Printf("%v", subMap)
+
+	for _, listId := range hashObj.PartOf {
+		_, ok := subMap[listId.Hex()]
+
+		if ok {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		log.Printf("Room %s is not subscribed to any lists of hashobj %s!", roomConfig.RoomID, hashObj.ID.Hex())
+		return // Not subscribed
+	}
+
+	log.Printf("Illegal content detected in room %s!", roomConfig.RoomID)
+
 	handleIllegalContent(evt, matrixClient, hashObj, roomConfig)
 }
 
@@ -95,78 +124,6 @@ func redactMessage(evt *event.Event, matrixClient *mautrix.Client, hashObj *mode
 	if err != nil {
 		log.Printf("ERROR: Could not redact event - %v", err)
 	}
-}
-
-type StateEventPL struct {
-	Type           string              `json:"type"`
-	Sender         string              `json:"sender"`
-	RoomID         string              `json:"room_id"`
-	EventID        string              `json:"event_id"`
-	OriginServerTS int64               `json:"origin_server_ts"`
-	Content        StateEventPLContent `json:"content"`
-	Unsigned       struct {
-		Age int `json:"age"`
-	} `json:"unsigned"`
-}
-
-type StateEventPLContent struct {
-	Ban           int            `json:"ban"`
-	Events        map[string]int `json:"events"`
-	EventsDefault int            `json:"events_default"`
-	Invite        int            `json:"invite"`
-	Kick          int            `json:"kick"`
-	Notifications map[string]int `json:"notifications"`
-	Redact        int            `json:"redact"`
-	StateDefault  int            `json:"state_default"`
-	Users         map[string]int `json:"users"`
-	UsersDefault  int            `json:"users_default"`
-}
-
-func GetRoomState(matrixClient *mautrix.Client, roomId id.RoomID) (*StateEventPLContent, error) {
-	url := matrixClient.BuildURL("rooms", roomId.String(), "state")
-	log.Println(url)
-	res, err := matrixClient.MakeRequest("GET", url, nil, nil)
-	if err != nil {
-		return nil, fmt.Errorf("ERROR: Could request room state - %v", err)
-	}
-
-	var stateEvents []StateEventPL
-
-	err = json.Unmarshal(res, &stateEvents)
-	if err != nil {
-		return nil, fmt.Errorf("ERROR: Could parse room state - %v", err)
-	}
-
-	var plEventContent StateEventPLContent
-
-	found := false
-
-	for _, e2 := range stateEvents {
-		if e2.Type != event.StatePowerLevels.Type {
-			continue
-		}
-
-		found = true
-		plEventContent = e2.Content
-	}
-
-	if !found {
-		return nil, fmt.Errorf("ERROR: Could find room power level - %v", err)
-	}
-
-	if plEventContent.Events == nil {
-		plEventContent.Events = make(map[string]int)
-	}
-
-	if plEventContent.Notifications == nil {
-		plEventContent.Notifications = make(map[string]int)
-	}
-
-	if plEventContent.Users == nil {
-		plEventContent.Users = make(map[string]int)
-	}
-
-	return &plEventContent, nil
 }
 
 func muteUser(evt *event.Event, matrixClient *mautrix.Client, hashObj *model.DBEntry) {
@@ -186,6 +143,15 @@ func muteUser(evt *event.Event, matrixClient *mautrix.Client, hashObj *model.DBE
 
 }
 
+func banUser(evt *event.Event, matrixClient *mautrix.Client, hashObj *model.DBEntry) {
+	req := mautrix.ReqBanUser{
+		Reason: fmt.Sprintf("Veles has detected an hash-map-match! Tags: %s, ID: %s", hashObj.Tags, hashObj.ID.Hex()),
+		UserID: evt.Sender,
+	}
+
+	matrixClient.BanUser(evt.RoomID, &req)
+}
+
 func postNotice(evt *event.Event, matrixClient *mautrix.Client, hashObj *model.DBEntry, roomConfig config.RoomConfig) {
 	local, server, err := evt.Sender.Parse()
 	if err != nil {
@@ -198,18 +164,39 @@ If you believe this action was an accident, please contact an room administrator
 
 }
 
+/*func msgMods(evt *event.Event, matrixClient *mautrix.Client, hashObj *model.DBEntry, roomConfig config.RoomConfig) {
+	local, server, err := evt.Sender.Parse()
+	if err != nil {
+		return
+	}
+	SendAlert(matrixClient, evt.RoomID.String(), fmt.Sprintf(
+		`Veles Triggered: The message by %s (on %s) was flagged for containing material used by spammers or trolls! (Reference: %s)`, local, server, hashObj.ID.Hex()))
+}*/
+
 func handleIllegalContent(evt *event.Event, matrixClient *mautrix.Client, hashObj *model.DBEntry, roomConfig config.RoomConfig) {
-	switch roomConfig.HashCheckMode {
+	switch roomConfig.HashChecker.HashCheckMode {
 	case 0:
+		postNotice(evt, matrixClient, hashObj, roomConfig)
 		break
 	case 1:
+		redactMessage(evt, matrixClient, hashObj)
+		if roomConfig.HashChecker.NoticeToChat {
+			postNotice(evt, matrixClient, hashObj, roomConfig)
+		}
 		break
 	case 2:
 		muteUser(evt, matrixClient, hashObj)
 		redactMessage(evt, matrixClient, hashObj)
-		postNotice(evt, matrixClient, hashObj, roomConfig)
+		if roomConfig.HashChecker.NoticeToChat {
+			postNotice(evt, matrixClient, hashObj, roomConfig)
+		}
 		break
 	case 3:
+		banUser(evt, matrixClient, hashObj)
+		redactMessage(evt, matrixClient, hashObj)
+		if roomConfig.HashChecker.NoticeToChat {
+			postNotice(evt, matrixClient, hashObj, roomConfig)
+		}
 		break
 
 	}
