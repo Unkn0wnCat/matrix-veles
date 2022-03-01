@@ -240,3 +240,36 @@ func GetUserByUsername(username string) (*model.DBUser, error) {
 
 	return &object, nil
 }
+
+func GetUsers(first int64, cursor *primitive.ObjectID) ([]*model.DBUser, error) {
+	db := DbClient.Database(viper.GetString("bot.mongo.database"))
+
+	opts := options.FindOptions{
+		Limit: &first,
+	}
+
+	filter := bson.M{}
+
+	if cursor != nil {
+		filter = bson.M{
+			"_id": bson.M{
+				"$gt": *cursor,
+			},
+		}
+		log.Println(filter)
+	}
+
+	res, err := db.Collection(viper.GetString("bot.mongo.collection.users")).Find(context.TODO(), filter, &opts)
+	if err != nil {
+		return nil, res.Err()
+	}
+
+	var object []*model.DBUser
+
+	err = res.All(context.TODO(), &object)
+	if err != nil {
+		return nil, err
+	}
+
+	return object, nil
+}

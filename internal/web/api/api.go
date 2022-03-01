@@ -21,6 +21,17 @@ func SetupAPI() chi.Router {
 	router.Post("/auth/login", apiHandleAuthLogin)
 	router.Post("/auth/register", apiHandleAuthRegister)
 
+	router.Route("/users", func(r chi.Router) {
+		r.Use(checkAuthMiddleware)
+
+		r.Get("/", apiHandleAuthUsersList)
+
+		r.Get("/by-name/{name}", apiHandleAuthUserByName)
+		//r.Get("/by-mid/{name}", apiHandleAuthUserByMid)
+		r.Get("/@self", apiHandleAuthUserSelf)
+		r.Get("/{id}", apiHandleAuthUser)
+	})
+
 	router.Route("/entries", func(r chi.Router) {
 		r.Use(checkAuthMiddleware)
 

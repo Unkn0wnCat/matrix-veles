@@ -19,6 +19,8 @@ package bot
 
 import (
 	"github.com/Unkn0wnCat/matrix-veles/internal/config"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/spf13/viper"
 	"log"
 	"maunium.net/go/mautrix"
@@ -29,6 +31,34 @@ import (
 	"strings"
 	"syscall"
 	"time"
+)
+
+var (
+	messageEventsProcessed = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "bot",
+		Name:      "processed_message_events_total",
+		Help:      "The total number of processed message events",
+	})
+	memberEventsProcessed = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "bot",
+		Name:      "processed_member_events_total",
+		Help:      "The total number of processed member events",
+	})
+	filesProcessed = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "bot",
+		Name:      "processed_files_total",
+		Help:      "The total number of processed files",
+	})
+	commandsProcessed = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "bot",
+		Name:      "processed_commands_total",
+		Help:      "The total number of processed commands",
+	})
+	joinedRooms = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "bot",
+		Name:      "joined_rooms",
+		Help:      "Number of rooms the bot has joined",
+	})
 )
 
 // Run starts the bot, blocking until an interrupt or SIGTERM is received
@@ -132,6 +162,8 @@ func doInitialUpdate(matrixClient *mautrix.Client) {
 		log.Fatalln(err)
 	}
 
+	joinedRooms.Set(float64(len(resp.JoinedRooms)))
+
 	// Hand-off list to config helper
 	config.RoomConfigInitialUpdate(resp.JoinedRooms)
 }
@@ -146,6 +178,8 @@ func handleMessageEvent(matrixClient *mautrix.Client, startTs int64) mautrix.Eve
 
 		// Cast event to correct event type
 		content, ok := evt.Content.Parsed.(*event.MessageEventContent)
+
+		defer messageEventsProcessed.Inc()
 
 		if !ok {
 			log.Println("Uh oh, could not typecast m.room.member event content...")
@@ -186,6 +220,8 @@ func handleMemberEvent(matrixClient *mautrix.Client, startTs int64) func(source 
 			return
 		}
 
+		defer memberEventsProcessed.Inc()
+
 		// Cast event to correct event type
 		content, ok := evt.Content.Parsed.(*event.MemberEventContent)
 
@@ -203,12 +239,14 @@ func handleMemberEvent(matrixClient *mautrix.Client, startTs int64) func(source 
 		// If it is our join event, set room to active
 		if content.Membership == event.MembershipJoin {
 			config.SetRoomConfigActive(evt.RoomID.String(), true)
+			joinedRooms.Inc()
 			return
 		}
 
 		// If we left or got banned, set room to inactive
 		if content.Membership.IsLeaveOrBan() {
 			config.SetRoomConfigActive(evt.RoomID.String(), false)
+			joinedRooms.Dec()
 			return
 		}
 	}

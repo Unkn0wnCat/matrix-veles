@@ -4,6 +4,7 @@ import (
 	"github.com/Unkn0wnCat/matrix-veles/internal/web/api"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 	"log"
 	"net/http"
@@ -19,6 +20,8 @@ func StartServer() {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
+
+	r.Handle("/metrics", promhttp.Handler())
 
 	r.HandleFunc("/", HomeHandler)
 	//r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))

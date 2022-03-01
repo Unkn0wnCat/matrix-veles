@@ -31,6 +31,8 @@ func handleCommand(command string, sender id.UserID, id id.RoomID, client *mautr
 		log.Panicln("Invalid user id in client")
 	}
 
+	defer commandsProcessed.Inc()
+
 	command = strings.TrimPrefix(command, "!")        // Remove !
 	command = strings.TrimPrefix(command, "@")        // Remove @
 	command = strings.TrimPrefix(command, myUsername) // Remove our own username

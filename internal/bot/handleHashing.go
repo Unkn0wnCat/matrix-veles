@@ -10,11 +10,28 @@ import (
 	"github.com/Unkn0wnCat/matrix-veles/internal/config"
 	"github.com/Unkn0wnCat/matrix-veles/internal/db"
 	"github.com/Unkn0wnCat/matrix-veles/internal/db/model"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.mongodb.org/mongo-driver/mongo"
 	"io"
 	"log"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
+)
+
+var (
+	filesFlagged = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "bot",
+		Subsystem: "hash_handler",
+		Name:      "flagged_files_total",
+		Help:      "The total number of files found to be matching a hash",
+	})
+	filesCleared = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "bot",
+		Subsystem: "hash_handler",
+		Name:      "cleared_files_total",
+		Help:      "The total number of files found to not be matching a hash",
+	})
 )
 
 // handleHashing hashes and checks a message, taking configured actions on match
@@ -44,9 +61,12 @@ func handleHashing(content *event.MessageEventContent, evt *event.Event, matrixC
 	// Fetch room configuration for adjusting behaviour
 	roomConfig := config.GetRoomConfig(evt.RoomID.String())
 
+	defer filesProcessed.Inc()
+
 	hashObj, err := db.GetEntryByHash(sum)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
+			filesCleared.Inc()
 			if roomConfig.Debug {
 				matrixClient.SendNotice(evt.RoomID, fmt.Sprintf("DEBUG - This file is not on the hashlist: %s", sum))
 			}
@@ -116,6 +136,8 @@ func checkSubscription(roomConfig *config.RoomConfig, hashObj *model.DBEntry) bo
 
 // handleIllegalContent is called when a hash-match is found to take configured actions
 func handleIllegalContent(evt *event.Event, matrixClient *mautrix.Client, hashObj *model.DBEntry, roomConfig config.RoomConfig) {
+	filesFlagged.Inc()
+
 	switch roomConfig.HashChecker.HashCheckMode {
 	case 0:
 		postNotice(evt, matrixClient, hashObj, roomConfig)
