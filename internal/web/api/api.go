@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	chiprometheus "github.com/766b/chi-prometheus"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strings"
@@ -11,6 +12,9 @@ import (
 
 func SetupAPI() chi.Router {
 	router := chi.NewRouter()
+
+	m := chiprometheus.NewMiddleware("api")
+	router.Use(m)
 
 	router.NotFound(notFoundHandler)
 	router.MethodNotAllowed(methodNotAllowedHandler)
