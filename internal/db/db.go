@@ -91,8 +91,6 @@ func GetEntries(first int64, cursor *primitive.ObjectID) ([]*model.DBEntry, erro
 		return nil, err
 	}
 
-	log.Println("DBG1")
-
 	return object, nil
 }
 
@@ -142,6 +140,57 @@ func GetListByID(id primitive.ObjectID) (*model.DBHashList, error) {
 	}
 
 	return &object, nil
+}
+
+func GetListByName(name string) (*model.DBHashList, error) {
+	db := DbClient.Database(viper.GetString("bot.mongo.database"))
+
+	res := db.Collection(viper.GetString("bot.mongo.collection.lists")).FindOne(context.TODO(), bson.D{{"name", name}})
+	if res.Err() != nil {
+		return nil, res.Err()
+	}
+
+	object := model.DBHashList{}
+
+	err := res.Decode(&object)
+	if err != nil {
+		return nil, err
+	}
+
+	return &object, nil
+}
+
+func GetLists(first int64, cursor *primitive.ObjectID) ([]*model.DBHashList, error) {
+	db := DbClient.Database(viper.GetString("bot.mongo.database"))
+
+	opts := options.FindOptions{
+		Limit: &first,
+	}
+
+	filter := bson.M{}
+
+	if cursor != nil {
+		filter = bson.M{
+			"_id": bson.M{
+				"$gt": *cursor,
+			},
+		}
+		log.Println(filter)
+	}
+
+	res, err := db.Collection(viper.GetString("bot.mongo.collection.lists")).Find(context.TODO(), filter, &opts)
+	if err != nil {
+		return nil, res.Err()
+	}
+
+	var object []*model.DBHashList
+
+	err = res.All(context.TODO(), &object)
+	if err != nil {
+		return nil, err
+	}
+
+	return object, nil
 }
 
 func SaveUser(user *model.DBUser) error {

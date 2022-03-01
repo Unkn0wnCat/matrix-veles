@@ -31,6 +31,16 @@ func SetupAPI() chi.Router {
 		r.Get("/{id}", apiHandleBotEntry)
 	})
 
+	router.Route("/lists", func(r chi.Router) {
+		r.Use(checkAuthMiddleware)
+
+		r.Get("/", apiHandleBotListsList)
+		r.Post("/", apiHandleBotListsPost)
+
+		r.Get("/by-name/{name}", apiHandleBotListByName)
+		r.Get("/{id}", apiHandleBotList)
+	})
+
 	router.Route("/test", func(r chi.Router) {
 		r.Use(checkAuthMiddleware)
 

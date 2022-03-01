@@ -12,6 +12,8 @@ type DBUser struct {
 	Username       string `bson:"username" json:"username"` // Username is the username the user has
 	HashedPassword string `bson:"password" json:"password"` // HashedPassword contains the bcrypt-ed password
 
+	Admin *bool `bson:"admin,omitempty" json:"admin,omitempty"` // If set to true this user will have all privileges
+
 	MatrixLinks        []*string `bson:"matrix_links" json:"matrix_links"`                 // MatrixLinks is the matrix-users this user has verified ownership over
 	PendingMatrixLinks []*string `bson:"pending_matrix_links" json:"pending_matrix_links"` // PendingMatrixLinks is the matrix-users pending verification
 
