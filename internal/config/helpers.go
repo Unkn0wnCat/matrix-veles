@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"github.com/Unkn0wnCat/matrix-veles/internal/db"
+	"github.com/Unkn0wnCat/matrix-veles/internal/tracer"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -66,11 +67,16 @@ func GetRoomConfig(id string) RoomConfig {
 }
 
 // RoomConfigInitialUpdate updates all RoomConfig entries to set activity and create blank configs
-func RoomConfigInitialUpdate(ids []id.RoomID) {
+func RoomConfigInitialUpdate(ids []id.RoomID, parentCtx context.Context) {
+	ctx, span := tracer.Tracer.Start(parentCtx, "initial_room_config_update")
+	defer span.End()
+
+	_, dbGetAllSpan := tracer.Tracer.Start(ctx, "db_fetch_room_configs")
 	database := db.DbClient.Database(viper.GetString("bot.mongo.database"))
 
 	cursor, err := database.Collection("rooms").Find(context.TODO(), bson.D{}, nil)
 	if err != nil {
+		dbGetAllSpan.RecordError(err)
 		log.Panicf("Error querying room configs: %v", err)
 	}
 
@@ -78,8 +84,13 @@ func RoomConfigInitialUpdate(ids []id.RoomID) {
 
 	err = cursor.All(context.TODO(), &roomConfigs)
 	if err != nil {
+		dbGetAllSpan.RecordError(err)
 		log.Panicf("Error querying room configs: %v", err)
 	}
+
+	dbGetAllSpan.End()
+
+	ctx2, updateConfigs := tracer.Tracer.Start(ctx, "update_room_configs")
 
 	activeRooms := make(map[string]bool)
 
@@ -88,16 +99,22 @@ func RoomConfigInitialUpdate(ids []id.RoomID) {
 		activeRooms[roomConfig.RoomID] = false
 	}
 
+	_, updateRooms := tracer.Tracer.Start(ctx2, "update_joined_rooms")
 	// Go over all joined rooms
 	for _, roomID := range ids {
 		activeRooms[roomID.String()] = true
 
 		GetRoomConfig(roomID.String())
 	}
+	updateRooms.End()
 
+	_, saveConfigs := tracer.Tracer.Start(ctx2, "save_room_configs")
 	for roomID, isActive := range activeRooms {
 		SetRoomConfigActive(roomID, isActive)
 	}
+	saveConfigs.End()
+
+	updateConfigs.End()
 }
 
 func AddRoomConfig(id string) RoomConfig {

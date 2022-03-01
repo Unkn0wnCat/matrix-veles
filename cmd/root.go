@@ -18,6 +18,7 @@
 package cmd
 
 import (
+	"github.com/Unkn0wnCat/matrix-veles/internal/tracer"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -62,7 +63,18 @@ func init() {
 	viper.SetDefault("bot.web.listen", "127.0.0.1:8123")
 	viper.SetDefault("bot.web.secret", "hunter2")
 
+	viper.SetDefault("tracing.enable", false)
+	viper.SetDefault("tracing.jaeger.endpoint", "http://localhost:14268/api/traces")
+
 	cobra.OnInitialize(loadConfig)
+	cobra.OnInitialize(func() {
+		if viper.GetBool("tracing.enable") {
+			tracer.SetupJaeger()
+		}
+		if !viper.GetBool("tracing.enable") {
+			tracer.SetupDummy()
+		}
+	})
 }
 
 func loadConfig() {

@@ -19,9 +19,11 @@ package bot
 
 import (
 	"github.com/Unkn0wnCat/matrix-veles/internal/config"
+	"github.com/Unkn0wnCat/matrix-veles/internal/tracer"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/spf13/viper"
+	"go.opentelemetry.io/otel/attribute"
 	"log"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/event"
@@ -104,8 +106,11 @@ func Run() {
 
 	matrixClient.StopSync()
 
+	tracer.TraceProvider.Shutdown(tracer.Ctx)
+
 	log.Printf("Goodbye!")
 
+	tracer.Cancel()
 	os.Exit(0)
 }
 
@@ -156,21 +161,29 @@ func performLogin(matrixClient *mautrix.Client) {
 
 // doInitialUpdate updates the config right after startup to catch up with joined/left rooms
 func doInitialUpdate(matrixClient *mautrix.Client) {
+	ctx, span := tracer.Tracer.Start(tracer.Ctx, "initial_update")
+	defer span.End()
+
+	_, requestSpan := tracer.Tracer.Start(ctx, "request_joined_rooms")
 	resp, err := matrixClient.JoinedRooms()
 	if err != nil {
 		log.Printf("matrix-veles could not read joined rooms, something is horribly wrong")
 		log.Fatalln(err)
 	}
+	requestSpan.End()
 
 	joinedRooms.Set(float64(len(resp.JoinedRooms)))
 
 	// Hand-off list to config helper
-	config.RoomConfigInitialUpdate(resp.JoinedRooms)
+	config.RoomConfigInitialUpdate(resp.JoinedRooms, ctx)
 }
 
 // handleMessageEvent wraps message handler taking the mautrix.Client and start timestamp as parameters
 func handleMessageEvent(matrixClient *mautrix.Client, startTs int64) mautrix.EventHandler {
 	return func(source mautrix.EventSource, evt *event.Event) {
+		ctx, span := tracer.Tracer.Start(tracer.Ctx, "handle_message_event")
+		defer span.End()
+
 		if evt.Timestamp < (startTs * 1000) {
 			// Ignore old events
 			return
@@ -192,20 +205,25 @@ func handleMessageEvent(matrixClient *mautrix.Client, startTs int64) mautrix.Eve
 		}
 
 		if content.URL != "" {
+			span.SetAttributes(attribute.Bool("has_attachment", true))
 			// This has an attachment!
-			handleHashing(content, evt, matrixClient) // -> handleHashing.go
+			handleHashing(content, evt, matrixClient, ctx) // -> handleHashing.go
 			return
 		}
+		span.SetAttributes(attribute.Bool("has_attachment", false))
 
 		// No attachment, is this a command?
 		if !strings.HasPrefix(content.Body, "!"+username) &&
 			!strings.HasPrefix(content.Body, "@"+username) &&
 			!(strings.HasPrefix(content.Body, username) && strings.HasPrefix(content.FormattedBody, "<a href=\"https://matrix.to/#/"+matrixClient.UserID.String()+"\">")) {
+			span.SetAttributes(attribute.Bool("is_command", false))
 			return
 		}
 
+		span.SetAttributes(attribute.Bool("is_command", true))
+
 		// It is a command!
-		handleCommand(content.Body, evt.Sender, evt.RoomID, matrixClient) // -> commandParser.go
+		handleCommand(content.Body, evt.Sender, evt.RoomID, matrixClient, ctx) // -> commandParser.go
 	}
 }
 

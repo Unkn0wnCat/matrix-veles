@@ -18,6 +18,9 @@
 package bot
 
 import (
+	"context"
+	"github.com/Unkn0wnCat/matrix-veles/internal/tracer"
+	"go.opentelemetry.io/otel/attribute"
 	"log"
 	"maunium.net/go/mautrix"
 	"maunium.net/go/mautrix/id"
@@ -25,9 +28,15 @@ import (
 )
 
 // handleCommand takes a command, parses it and executes any actions it implies
-func handleCommand(command string, sender id.UserID, id id.RoomID, client *mautrix.Client) {
+func handleCommand(command string, sender id.UserID, id id.RoomID, client *mautrix.Client, parentCtx context.Context) {
+	ctx, span := tracer.Tracer.Start(parentCtx, "handle_command")
+	defer span.End()
+
+	_, prepSpan := tracer.Tracer.Start(ctx, "command_prepare")
+
 	myUsername, _, err := client.UserID.Parse()
 	if err != nil {
+		prepSpan.RecordError(err)
 		log.Panicln("Invalid user id in client")
 	}
 
@@ -38,6 +47,10 @@ func handleCommand(command string, sender id.UserID, id id.RoomID, client *mautr
 	command = strings.TrimPrefix(command, myUsername) // Remove our own username
 	command = strings.TrimPrefix(command, ":")        // Remove : (as in "@soccerbot:")
 	command = strings.TrimSpace(command)
+
+	prepSpan.End()
+
+	span.SetAttributes(attribute.String("veles.command_handler.command", command))
 
 	// TODO: Remove this, it is debug!
 	log.Println(command)
