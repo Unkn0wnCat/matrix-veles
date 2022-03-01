@@ -78,8 +78,4 @@ func loadConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		log.Println("Using config file:", viper.ConfigFileUsed())
 	}
-
-	if viper.GetString("bot.web.secret") == "hunter2" {
-		log.Println("Web secret is not set! YOUR INSTALLATION IS INSECURE!")
-	}
 }

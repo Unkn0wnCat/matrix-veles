@@ -61,6 +61,41 @@ func GetEntryByID(id primitive.ObjectID) (*model.DBEntry, error) {
 	return &object, nil
 }
 
+func GetEntries(first int64, cursor *primitive.ObjectID) ([]*model.DBEntry, error) {
+	db := DbClient.Database(viper.GetString("bot.mongo.database"))
+
+	opts := options.FindOptions{
+		Limit: &first,
+	}
+
+	filter := bson.M{}
+
+	if cursor != nil {
+		filter = bson.M{
+			"_id": bson.M{
+				"$gt": *cursor,
+			},
+		}
+		log.Println(filter)
+	}
+
+	res, err := db.Collection(viper.GetString("bot.mongo.collection.entries")).Find(context.TODO(), filter, &opts)
+	if err != nil {
+		return nil, res.Err()
+	}
+
+	var object []*model.DBEntry
+
+	err = res.All(context.TODO(), &object)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("DBG1")
+
+	return object, nil
+}
+
 func GetEntryByHash(hash string) (*model.DBEntry, error) {
 	db := DbClient.Database(viper.GetString("bot.mongo.database"))
 

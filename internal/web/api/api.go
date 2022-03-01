@@ -4,28 +4,52 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strings"
 )
 
-func SetupAPI(router *mux.Router) {
-	router.NotFoundHandler = NotFoundHandler{}
-	router.MethodNotAllowedHandler = MethodNotAllowedHandler{}
+func SetupAPI() chi.Router {
+	router := chi.NewRouter()
 
-	router.Path("/auth/login").Methods("POST").HandlerFunc(apiHandleAuthLogin)
-	router.Path("/auth/register").Methods("POST").HandlerFunc(apiHandleAuthRegister)
+	router.NotFound(notFoundHandler)
+	router.MethodNotAllowed(methodNotAllowedHandler)
 
-	bot := router.PathPrefix("/bot").Subrouter()
-	bot.Use(checkAuthMiddleware)
+	//router.NotFoundHandler = NotFoundHandler{}
+	//router.MethodNotAllowedHandler = MethodNotAllowedHandler{}
 
-	bot.Path("/test").HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		writer.WriteHeader(200)
+	router.Post("/auth/login", apiHandleAuthLogin)
+	router.Post("/auth/register", apiHandleAuthRegister)
 
-		claims := request.Context().Value("claims").(jwtClaims)
+	router.Route("/entries", func(r chi.Router) {
+		r.Use(checkAuthMiddleware)
 
-		writer.Write([]byte(`hello ` + claims.Username))
+		r.Get("/", apiHandleBotEntriesList)
+		r.Post("/", apiHandleBotEntriesPost)
+
+		r.Get("/by-hash/{hash}", apiHandleBotEntryByHash)
+		r.Get("/{id}", apiHandleBotEntry)
 	})
+
+	router.Route("/test", func(r chi.Router) {
+		r.Use(checkAuthMiddleware)
+
+		r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
+			writer.WriteHeader(200)
+
+			claims := request.Context().Value("claims").(jwtClaims)
+
+			writer.Write([]byte(`hello ` + claims.Username))
+		})
+	})
+
+	return router
+}
+
+func getClaims(request *http.Request) jwtClaims {
+	claims := request.Context().Value("claims").(jwtClaims)
+
+	return claims
 }
 
 func checkAuthMiddleware(next http.Handler) http.Handler {
@@ -69,18 +93,14 @@ func writeJSONError(res http.ResponseWriter, statusCode int, err error) {
 	_, _ = res.Write(enc)
 }
 
-type NotFoundHandler struct{}
-
-func (NotFoundHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func notFoundHandler(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusNotFound)
-	_, _ = res.Write([]byte(`{"error": "not_found","error_code":404}`))
+	_, _ = res.Write([]byte(`{"error": "not found","error_code":404}`))
 }
 
-type MethodNotAllowedHandler struct{}
-
-func (MethodNotAllowedHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+func methodNotAllowedHandler(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusMethodNotAllowed)
-	_, _ = res.Write([]byte(`{"error": "method_not_allowed","error_code":405}`))
+	_, _ = res.Write([]byte(`{"error": "method not allowed","error_code":405}`))
 }

@@ -3,8 +3,8 @@ module github.com/Unkn0wnCat/matrix-veles
 go 1.16
 
 require (
+	github.com/go-chi/chi/v5 v5.0.7
 	github.com/golang-jwt/jwt/v4 v4.3.0
-	github.com/gorilla/mux v1.8.0
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
 	go.mongodb.org/mongo-driver v1.8.3

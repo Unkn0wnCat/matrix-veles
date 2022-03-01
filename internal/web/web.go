@@ -2,7 +2,8 @@ package web
 
 import (
 	"github.com/Unkn0wnCat/matrix-veles/internal/web/api"
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/spf13/viper"
 	"log"
 	"net/http"
@@ -10,12 +11,19 @@ import (
 )
 
 func StartServer() {
-	r := mux.NewRouter()
+	if viper.GetString("bot.web.secret") == "hunter2" {
+		log.Println("Web secret is not set! REFUSING TO START WEB SERVER!")
+		return
+	}
+
+	r := chi.NewRouter()
+
+	r.Use(middleware.Logger)
+
 	r.HandleFunc("/", HomeHandler)
 	//r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
-	apiRouter := r.PathPrefix("/api").Subrouter()
-	api.SetupAPI(apiRouter)
+	r.Mount("/api", api.SetupAPI())
 
 	srv := &http.Server{
 		Handler:      r,
