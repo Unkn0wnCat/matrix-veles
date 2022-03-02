@@ -33,6 +33,8 @@ const config = {
             }
             return `https://github.com/Unkn0wnCat/matrix-veles/tree/main/website/${versionDocsDirPath}/${docPath}`;
           },
+          showLastUpdateAuthor: true,
+          showLastUpdateTime: true
         },
         /*blog: {
           showReadingTime: true,
@@ -135,6 +137,15 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
+      },
+      colorMode: {
+        respectPrefersColorScheme: true
+      },
+      announcementBar: {
+        id: 'alpha_software',
+        content:
+            'Veles is currently Alpha-Software - Some things might not be ready yet!',
+        isCloseable: false,
       },
     }),
 };
