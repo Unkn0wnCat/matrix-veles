@@ -1,0 +1,18 @@
+{
+  "title": {
+    "message": "Matrix-Veles",
+    "description": "The title in the navbar"
+  },
+  "item.label.Documentation": {
+    "message": "Dokumentation",
+    "description": "Navbar item with label Documentation"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  },
+  "item.label.Download": {
+    "message": "Herunterladen",
+    "description": "Navbar item with label Download"
+  }
+}
