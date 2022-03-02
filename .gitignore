@@ -1,6 +1,8 @@
 /matrix-veles
 /config.yaml
 
+node_modules
+
 ### NotepadPP template
 # Notepad++ backups #
 *.bak
