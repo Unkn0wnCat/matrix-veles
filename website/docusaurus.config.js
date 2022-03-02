@@ -27,12 +27,15 @@ const config = {
       ({
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
-          editUrl: 'https://github.com/Unkn0wnCat/matrix-veles/tree/main/website/',
+          editUrl: ({locale, versionDocsDirPath, docPath}) => {
+            if (locale !== "en") {
+              return `https://crowdin.com/project/matrix-veles/${locale}`;
+            }
+            return `https://github.com/Unkn0wnCat/matrix-veles/tree/main/website/${versionDocsDirPath}/${docPath}`;
+          },
         },
         /*blog: {
           showReadingTime: true,
-          // Please change this to your repo.
           editUrl:
             'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
         },*/
