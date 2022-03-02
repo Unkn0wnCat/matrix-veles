@@ -38,3 +38,17 @@
 [data-theme='dark'] .docusaurus-highlight-code-line {
   background-color: rgba(0, 0, 0, 0.3);
 }
+
+.hero--primary {
+  background: linear-gradient(129.96deg, #FF2F2F 10.43%, #000460 92.78%), radial-gradient(100% 246.94% at 100% 0%, #FFFFFF 0%, #020063 100%), linear-gradient(58.72deg, #2200F2 0%, #530000 100%), linear-gradient(154.03deg, #B70000 0%, #FF003D 74.04%), linear-gradient(341.1deg, #FF0000 7.52%, #0038FF 77.98%), linear-gradient(136.23deg, #00C2FF 11.12%, #FF0000 86.47%), radial-gradient(57.37% 100% at 50% 0%, #B50000 0%, #0034BB 100%);
+  background-blend-mode: overlay, color-burn, screen, overlay, difference, difference, normal;
+  color: white;
+}
+
+.announcementBar_node_modules-\@docusaurus-theme-classic-lib-next-theme-AnnouncementBar-styles-module {
+  --color-stripe: #f86b40;
+
+  background-image: repeating-linear-gradient(45deg, var(--color-stripe) 0, var(--color-stripe) 50px, transparent 51px, transparent 99px);
+
+  text-shadow: 0 0 10px white;
+}
