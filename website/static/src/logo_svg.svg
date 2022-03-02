@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="120" height="120" version="1.1" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="linearGradient43644">
+   <stop stop-color="#007300" offset="0"/>
+   <stop stop-color="#007300" stop-opacity=".0072181" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient1301" x1="49.693" x2="69.839" y1="25.512" y2="25.512" gradientTransform="translate(4,8)" gradientUnits="userSpaceOnUse" xlink:href="#linearGradient43644"/>
+  <linearGradient id="linearGradient1303" x1="49.777" x2="70.07" y1="81.546" y2="81.546" gradientTransform="translate(0,6)" gradientUnits="userSpaceOnUse" xlink:href="#linearGradient43644"/>
+  <linearGradient id="linearGradient31669" x1="91.453" x2="72.905" y1="48.722" y2="48.722" gradientUnits="userSpaceOnUse" xlink:href="#linearGradient43644"/>
+ </defs>
+ <path d="m4.0226 8.0649 30.026 50.894h59.933l30.009-50.864" fill="none" stroke="url(#linearGradient1301)" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.048"/>
+ <path d="m36.324 67.382h47.484l-23.793 40.329z" fill="none" stroke="url(#linearGradient1303)" stroke-linejoin="round" stroke-width="4.048"/>
+ <text transform="translate(-3.6704 12.24)" fill="url(#linearGradient31669)" font-family="sans-serif" font-size="26.667px" style="line-height:0.95;shape-inside:url(#rect8261);white-space:pre" xml:space="preserve"/>
+</svg>
