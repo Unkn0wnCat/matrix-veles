@@ -4,6 +4,12 @@ sidebar_position: 1
 
 # Documentation Intro
 
+:::caution
+
+This documentation is for the Alpha version of Matrix-Veles. Veles may be unstable and weird.
+
+:::
+
 So you are interested in Veles, that's great! And actually you came
 to exactly the right place.
 

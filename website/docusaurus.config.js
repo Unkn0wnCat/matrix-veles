@@ -15,6 +15,10 @@ const config = {
   favicon: 'img/favicon.ico',
   organizationName: 'Unkn0wnCat',
   projectName: 'matrix-veles',
+  i18n: {
+    defaultLocale: "en",
+    locales: ["en", "de"]
+  },
 
   presets: [
     [
@@ -56,6 +60,10 @@ const config = {
             label: 'Documentation',
           },
           //{to: '/blog', label: 'Blog', position: 'left'},
+          {
+            type: 'localeDropdown',
+            position: 'right',
+          },
           {
             href: 'https://github.com/Unkn0wnCat/matrix-veles',
             label: 'GitHub',

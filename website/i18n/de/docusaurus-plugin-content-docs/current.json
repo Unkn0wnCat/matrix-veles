@@ -1,0 +1,14 @@
+{
+  "version.label": {
+    "message": "Nächste",
+    "description": "The label for version current"
+  },
+  "sidebar.tutorialSidebar.category.Tutorial - Basics": {
+    "message": "Einführung - Grundlagen",
+    "description": "The label for category Tutorial - Basics in sidebar tutorialSidebar"
+  },
+  "sidebar.tutorialSidebar.category.Tutorial - Extras": {
+    "message": "Einführung - Extras",
+    "description": "The label for category Tutorial - Extras in sidebar tutorialSidebar"
+  }
+}

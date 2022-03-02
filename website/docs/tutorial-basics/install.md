@@ -4,6 +4,12 @@ sidebar_position: 1
 
 # Installing Veles
 
+:::caution
+
+This documentation is for the Alpha version of Matrix-Veles. Veles may be unstable and weird.
+
+:::
+
 :::info Software-Recommendations
 
 Whilst Veles should work on Linux, Windows and macOS, **we strongly recommend you use Linux** as this is what
