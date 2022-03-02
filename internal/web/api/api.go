@@ -6,12 +6,22 @@ import (
 	"errors"
 	chiprometheus "github.com/766b/chi-prometheus"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"net/http"
 	"strings"
 )
 
 func SetupAPI() chi.Router {
 	router := chi.NewRouter()
+
+	router.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://*", "https://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
 
 	m := chiprometheus.NewMiddleware("api")
 	router.Use(m)
