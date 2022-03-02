@@ -45,7 +45,7 @@
   color: white;
 }
 
-.announcementBar_node_modules-\@docusaurus-theme-classic-lib-next-theme-AnnouncementBar-styles-module {
+div[role=banner] {
   --color-stripe: #f86b40;
 
   background-image: repeating-linear-gradient(45deg, var(--color-stripe) 0, var(--color-stripe) 50px, transparent 51px, transparent 99px);
