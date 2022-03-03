@@ -5,14 +5,14 @@ import App from './App';
 import {store} from './app/store';
 import {Provider} from 'react-redux';
 import * as serviceWorker from './serviceWorker';
-import AxiosContext, {axiosDefault} from "./context/axios";
+import { BrowserRouter } from "react-router-dom";
 
 ReactDOM.render(
     <React.StrictMode>
         <Provider store={store}>
-            <AxiosContext.Provider value={axiosDefault}>
+            <BrowserRouter>
                 <App/>
-            </AxiosContext.Provider>
+            </BrowserRouter>
         </Provider>
     </React.StrictMode>,
     document.getElementById('root')

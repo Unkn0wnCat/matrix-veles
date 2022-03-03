@@ -1,28 +1,30 @@
 import React, {useState} from 'react';
-import logo from './logo.svg';
-import {Counter} from './features/counter/Counter';
-import AxiosContext from "./context/axios";
-import {AxiosError} from "axios";
+import { Routes, Route, Link } from "react-router-dom";
+import AuthLayout from "./layouts/AuthLayout";
+import LoginView from "./components/auth/LoginView";
+import RegisterView from "./components/auth/RegisterView";
+import RequireAuth from "./features/auth/RequireAuth";
+import {useAppDispatch} from "./app/hooks";
+import broadcastChannel from "./app/broadcastChannel";
+import {receiveAuthUpdate} from "./features/auth/authSlice";
 
 function App() {
-    const [test, setTest] = useState("Loading...")
+    const dispatch = useAppDispatch()
+
+    broadcastChannel.on("message", (ev) => {
+        if(ev.action == "updateAuth") {
+            dispatch(receiveAuthUpdate(ev))
+        }
+    })
+
     return (
-        <div className="App">
-            <AxiosContext.Consumer>
-                {
-                    axios => {
-
-                        if(test == "Loading...") axios.get("/").then(res => {
-                            setTest(JSON.stringify(res.data, null,  2))
-                        }).catch((err: AxiosError) => {
-                            setTest(JSON.stringify(err.response?.data))
-                        })
-
-                        return <pre>{test}</pre>
-                    }
-                }
-            </AxiosContext.Consumer>
-        </div>
+        <Routes>
+            <Route path={"/auth"} element={<AuthLayout/>}>
+                <Route path={"login"} element={<LoginView/>} />
+                <Route path={"register"} element={<RegisterView/>} />
+            </Route>
+            <Route path={"/"} element={<RequireAuth><h1>hi</h1></RequireAuth>}/>
+        </Routes>
     );
 }
 

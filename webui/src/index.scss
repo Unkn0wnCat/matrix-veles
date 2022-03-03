@@ -1,0 +1,45 @@
+@use "@fontsource/exo-2/scss/mixins" as Exo2;
+@import "./globals";
+
+@include Exo2.fontFaceVariable($type: "wghtOnly");
+$fontMain: "Exo 2Variable", "Exo 2", sans-serif;
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  min-height: 100vh;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  font-family: $fontMain;
+}
+
+:root {
+  --veles-color-background: #0d0d0d;
+  --veles-color-foreground: #fff;
+  --veles-color-border: #1c1c1c;
+  --veles-color-surface: #ffffff08;
+  --veles-color-accent: #007300;
+  --veles-color-error: #e3373e;
+
+  --veles-layout-padding: 20px;
+  --veles-layout-padding-slim: 10px;
+  --veles-layout-border-radius: 10px;
+}
+
+@media(prefers-color-scheme: light) {
+  :root {
+    --veles-color-background: #f2f2f2;
+    --veles-color-foreground: #0d0d0d;
+    --veles-color-border: #cccccc;
+    --veles-color-surface: #00000008;
+    --veles-color-accent: #007300;
+  }
+}
+
+a {
+  color: inherit;
+  text-decoration: underline dotted currentColor;
+}
