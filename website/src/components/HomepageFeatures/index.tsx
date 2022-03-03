@@ -31,7 +31,7 @@ const FeatureList: FeatureItem[] = [
             experience using GoLang - a next-gen language from Google.</Translate>
         <br/>
         <Translate>
-            And the best thing It\'s open source! Fork it, make a mod where
+            And the best thing: It's open source! Fork it, make a mod where
             all bad messages are replaced by cat images! You are free!
         </Translate>
       </>

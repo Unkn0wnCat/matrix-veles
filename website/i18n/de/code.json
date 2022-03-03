@@ -1,4 +1,39 @@
 {
+  "Protector of your Matrix-harvest!": {
+    "message": "Beschützer deiner Matrix-Ernte!"
+  },
+  "Quick Start Tutorial - 5min ⏱️": {
+    "message": "Schnellstart-Anleitung - 5min ⏱️"
+  },
+  "Welcome": {
+    "message": "Willkommen",
+    "description": "Title of the homepage"
+  },
+  "Matrix-Veles is a next-gen bot for protecting Matrix-chat-rooms against spammers.": {
+    "message": "Matrix-Veles ist ein moderner Bot, um Matrix-Chat-Räume gegen Spammer zu schützen.",
+    "description": "Meta-Description of the homepage"
+  },
+  "Lightweight": {
+    "message": "Ressourcenschonend"
+  },
+  "Veles is built to be light on storage, memory and CPU. Run it on your server, PC, Raspberry Pi or Smart Toaster!": {
+    "message": "Veles ist so konstruiert, dass es geringe Festplattenspeicher, Arbeitsspeicher und CPU-Ressourcen braucht. Führe es auf deinem Server, PC, Raspberry Pi oder Smart Toaster aus!"
+  },
+  "Modern Codebase": {
+    "message": "Moderne Codebase"
+  },
+  "Veles is built from the ground up to deliver you the best experience using GoLang - a next-gen language from Google.": {
+    "message": "Veles ist von Grund auf gebaut, um die beste Erfahrung mit GoLang - einer modernen Sprache von Google - zu liefern."
+  },
+  "And the best thing: It's open source! Fork it, make a mod where all bad messages are replaced by cat images! You are free!": {
+    "message": "Und das Beste: Es ist Quelloffen! Forke es, mach eine Mod wo alle bösen Nachrichten mit Katzenbildern ersetzt werden! Du bist frei!"
+  },
+  "Convenient Web Interface": {
+    "message": "Bequeme Weboberfläche"
+  },
+  "Veles can be managed from any PC in the world. All you need to access the modern web interface is an internet connection and a web browser.": {
+    "message": "Veles kann von jedem PC auf der Welt verwaltet werden. Alles, was du für den Zugriff auf die moderne Webschnittstelle benötigst, ist eine Internetverbindung und ein Webbrowser."
+  },
   "theme.ErrorPageContent.title": {
     "message": "Diese Seite ist abgestürzt.",
     "description": "The title of the fallback page when the page crashed"
@@ -19,13 +54,13 @@
     "message": "Bitte kontaktieren Sie die Besitzer*in der Seite, die dich mit der ursprünglichen URL verlinkt hat, und teile mit, dass der Link nicht mehr funktioniert.",
     "description": "The 2nd paragraph of the 404 page"
   },
-  "theme.BackToTopButton.buttonAriaLabel": {
-    "message": "Zurück nach oben",
-    "description": "The ARIA label for the back to top button"
-  },
   "theme.AnnouncementBar.closeButtonAriaLabel": {
     "message": "Schließen",
     "description": "The ARIA label for close button of announcement bar"
+  },
+  "theme.BackToTopButton.buttonAriaLabel": {
+    "message": "Zurück nach oben",
+    "description": "The ARIA label for the back to top button"
   },
   "theme.blog.archive.title": {
     "message": "Archiv",
@@ -151,7 +186,7 @@
     "description": "The label used to tell the user that he's browsing an unreleased doc version"
   },
   "theme.docs.versions.unmaintainedVersionLabel": {
-    "message": "Dies ist eine Dokumentation für {siteTitle} {versionLabel}, die nicht mehr aktiv gepflegt wird.",
+    "message": "Dies ist eine Dokumentation für {siteTitle} {versionLabel} die nicht mehr aktiv gepflegt wird.",
     "description": "The label used to tell the user that he's browsing an unmaintained doc version"
   },
   "theme.docs.versions.latestVersionSuggestionLabel": {
@@ -159,7 +194,7 @@
     "description": "The label used to tell the user to check the latest version"
   },
   "theme.docs.versions.latestVersionLinkLabel": {
-    "message": "Neuste Version",
+    "message": "neuste Version",
     "description": "The label used for the latest version suggestion link label"
   },
   "theme.common.editThisPage": {
@@ -207,11 +242,11 @@
     "description": "The ARIA label for the navbar color mode toggle"
   },
   "theme.colorToggle.ariaLabel.mode.dark": {
-    "message": "Dunkler Modus",
+    "message": "dunkler Modus",
     "description": "The name for the dark color mode"
   },
   "theme.colorToggle.ariaLabel.mode.light": {
-    "message": "Heller Modus",
+    "message": "heller Modus",
     "description": "The name for the light color mode"
   },
   "theme.navbar.mobileLanguageDropdown.label": {
@@ -221,40 +256,5 @@
   "theme.tags.tagsPageTitle": {
     "message": "Schlagwörter",
     "description": "The title of the tag list page"
-  },
-  "Protector of your Matrix-harvest!": {
-    "message": "Beschützer deiner Matrix-Ernte!"
-  },
-  "Quick Start Tutorial - 5min ⏱️": {
-    "message": "Schnellstart-Anleitung - 5min ⏱️"
-  },
-  "Welcome": {
-    "message": "Willkommen",
-    "description": "Title of the homepage"
-  },
-  "Matrix-Veles is a next-gen bot for protecting Matrix-chat-rooms against spammers.": {
-    "message": "Matrix-Veles ist ein moderner Bot, um Matrix-Chat-Räume gegen Spammer zu schützen.",
-    "description": "Meta-Description of the homepage"
-  },
-  "Lightweight": {
-    "message": "Ressourcenschonend"
-  },
-  "Veles is built to be light on storage, memory and CPU. Run it on your server, PC, Raspberry Pi or Smart Toaster!": {
-    "message": "Veles ist so konstruiert, dass es geringe Festplattenspeicher, Arbeitsspeicher und CPU-Ressourcen braucht. Führe es auf deinem Server, PC, Raspberry Pi oder Smart Toaster aus!"
-  },
-  "Modern Codebase": {
-    "message": "Moderne Codebase"
-  },
-  "Veles is built from the ground up to deliver you the best experience using GoLang - a next-gen language from Google.": {
-    "message": "Veles ist von Grund auf gebaut, um die beste Erfahrung mit GoLang - einer modernen Sprache von Google - zu liefern."
-  },
-  "And the best thing It\\'s open source! Fork it, make a mod where all bad messages are replaced by cat images! You are free!": {
-    "message": "Und das Beste: Es ist Quelloffen! Forke es, mache eine Mod wo alle bösen Nachrichten mit Katzenbildern ersetzt werden! Du bist frei!"
-  },
-  "Convenient Web Interface": {
-    "message": "Bequeme Weboberfläche"
-  },
-  "Veles can be managed from any PC in the world. All you need to access the modern web interface is an internet connection and a web browser.": {
-    "message": "Veles kann von jedem PC auf der Welt verwaltet werden. Alles, was du für den Zugriff auf die moderne Webschnittstelle benötigst, ist eine Internetverbindung und ein Webbrowser."
   }
 }
