@@ -1,6 +1,6 @@
-import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit';
-import {RootState, AppThunk} from '../../app/store';
-import broadcastChannel, { BroadcastMessage, sendMessage } from "../../app/broadcastChannel";
+import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import {RootState} from '../../app/store';
+import { BroadcastMessage, sendMessage } from "../../app/broadcastChannel";
 
 export interface AuthState {
     jwt: string|null;
