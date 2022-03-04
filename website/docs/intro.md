@@ -17,4 +17,4 @@ This is the documentation for Matrix-Veles. It contains a helpful
 quick-start-guide as well as in-depth references for anything
 you might need.
 
-So how about [checking out the basic tutorial to get you started](tutorial-basics/install)?
+So how about [checking out the basic tutorial to get you started](./tutorial-basics/install)?
