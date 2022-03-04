@@ -6,7 +6,7 @@ import RegisterView from "./components/auth/RegisterView";
 import RequireAuth from "./features/auth/RequireAuth";
 import {useAppDispatch} from "./app/hooks";
 import broadcastChannel from "./app/broadcastChannel";
-import {receiveAuthUpdate} from "./features/auth/authSlice";
+import {logOut, receiveAuthUpdate} from "./features/auth/authSlice";
 
 function App() {
     const dispatch = useAppDispatch()
@@ -23,7 +23,10 @@ function App() {
                 <Route path={"login"} element={<LoginView/>} />
                 <Route path={"register"} element={<RegisterView/>} />
             </Route>
-            <Route path={"/"} element={<RequireAuth><h1>hi</h1></RequireAuth>}/>
+            <Route path={"/"} element={<RequireAuth><h1>hi</h1> <button onClick={() => {
+                dispatch(logOut())
+            }
+            }>Log out</button></RequireAuth>}/>
         </Routes>
     );
 }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect} from "react";
 
 import styles from "./AuthLayout.module.scss";
 import {Link, useLocation, useNavigate, useOutlet} from "react-router-dom";
@@ -23,12 +23,14 @@ const AuthLayout = () => {
     const navigate = useNavigate()
 
 
-    if(authState.status == "logged_in") {
-        if(locationState && locationState.location) {
-            navigate(locationState.location, {replace: true})
+    useEffect(() => {
+        if(authState.status == "logged_in") {
+            if(locationState && locationState.location) {
+                navigate(locationState.location, {replace: true})
+            }
+            navigate("/", {replace: true})
         }
-        navigate("/", {replace: true})
-    }
+    }, [authState])
 
     return <div className={styles.auth}>
         <div className={styles.background}/>
