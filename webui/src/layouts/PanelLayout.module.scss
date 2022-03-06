@@ -24,7 +24,16 @@
 
   transition: color .25s;
 
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  border: none;
+
   font-weight: 600;
+
+  cursor: pointer;
+
+  height: 65px;
 
   &:hover, &.active, &:focus {
     color: var(--veles-color-accent);
@@ -46,10 +55,12 @@
 
   display: flex;
   flex-direction: column;
+  //overflow: hidden;
 
   .topBar {
     display: flex;
     border-bottom: thin solid var(--veles-color-border);
+    height: 66px;
 
     a {
       @include panelTopBarLink;
@@ -74,10 +85,54 @@
       display: flex;
       flex-direction: column;
       border-right: thin solid var(--veles-color-border);
+      overflow-x: auto;
+      height: calc(100vh - 66px);
+      width: 250px;
 
-      a {
+      >* {
+        flex-shrink: 0;
+      }
+
+      .dropdown {
+        height: 65px;
+        overflow: hidden;
+        transition: height .25s;
+
+        > button > svg {
+          transition: transform .25s;
+        }
+
+        > a {
+          display: none;
+          padding-left: var(--veles-layout-padding-wide)
+        }
+
+        &.expanded {
+          height: unset;
+
+          > a {
+            display: flex;
+          }
+
+          > button > svg {
+            transform: rotate(90deg);
+          }
+        }
+      }
+
+      a, button {
         @include panelTopBarLink;
+        width: 100%;
         padding: var(--veles-layout-padding);
+      }
+
+      button {
+        &:focus {
+          color: white;
+        }
+        &:active, &:hover {
+          color: var(--veles-color-accent);
+        }
       }
     }
 

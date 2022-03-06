@@ -1,16 +1,18 @@
-import React, {useRef, useState} from "react";
+import React, {useState} from "react";
 
 import styles from "./AuthViews.module.scss";
 
 import {ReactComponent as Logo} from "../../logo.svg";
-import {Link, useLocation, useNavigate} from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
 import {axiosDefault} from "../../context/axios";
 import {AxiosError} from "axios";
-import {useAppDispatch, useAppSelector} from "../../app/hooks";
-import {logIn, selectAuth} from "../../features/auth/authSlice";
+import {useAppDispatch} from "../../app/hooks";
+import {logIn} from "../../features/auth/authSlice";
 
 import {Key} from "lucide-react";
 import {AuthLocationState} from "../../layouts/AuthLayout";
+import {Helmet} from "react-helmet";
+import {Trans, useTranslation} from "react-i18next";
 
 const LoginView = () => {
     const [username, setUsername] = useState("");
@@ -24,6 +26,8 @@ const LoginView = () => {
     const location = useLocation();
 
     const locationState = location.state as AuthLocationState
+
+    const {t} = useTranslation()
 
     const onSubmit = async () => {
         setLoading(true)
@@ -42,7 +46,7 @@ const LoginView = () => {
             if((e as AxiosError).isAxiosError) {
                 const axErr = e as AxiosError
 
-                setError("Server returned error:    "+axErr.response?.data.error)
+                setError(": "+axErr.response?.data.error)
             } else {
                 setError("An unknown error occurred.")
             }
@@ -53,23 +57,27 @@ const LoginView = () => {
 
     return <>
         <Logo width={64} height={64} />
-        <h1>Login</h1>
+        <Helmet>
+            <title>{t("auth:login.htmlTitle", "Login to Veles")}</title>
+        </Helmet>
+
+        <h1><Trans i18nKey={"auth:login.title"}>Login</Trans></h1>
 
         { loading && <div className={styles.loader}>
             <Key/>
-            <span>Logging in...</span>
+            <span><Trans i18nKey={"auth:login.logging_in"}>Logging in...</Trans></span>
         </div>}
 
         { !loading && <>
             {error !== "" && <span className={styles.error}>{error}</span>}
 
             <form onSubmit={(e) => {e.preventDefault(); onSubmit()}} className={styles.authForm}>
-                <input onChange={(ev) => setUsername(ev.target.value)} value={username} placeholder={"Username"} />
-                <input onChange={(ev) => setPassword(ev.target.value)} value={password} placeholder={"Password"} type={"password"} />
-                <button onClick={() => onSubmit()}>Login</button>
+                <input onChange={(ev) => setUsername(ev.target.value)} value={username} placeholder={t("auth:username", "Username")} />
+                <input onChange={(ev) => setPassword(ev.target.value)} value={password} placeholder={t("auth:password", "Password")} type={"password"} />
+                <button onClick={() => onSubmit()}><Trans i18nKey={"auth:login.login"}>Login</Trans></button>
             </form>
 
-            <Link to={"/auth/register"} className={styles.mindChangedLink} aria-label={"Register"} state={locationState}>I don't have an account</Link>
+            <Link to={"/auth/register"} className={styles.mindChangedLink} aria-label={t("auth:register.register", "Register")} state={locationState}><Trans i18nKey={"auth:login.register_instead"}>I don't have an account</Trans></Link>
         </>}
     </>
 }

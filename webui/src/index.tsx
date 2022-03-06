@@ -7,12 +7,16 @@ import {Provider} from 'react-redux';
 import * as serviceWorker from './serviceWorker';
 import { BrowserRouter } from "react-router-dom";
 
+import "./i18n";
+
 ReactDOM.render(
     <React.StrictMode>
         <Provider store={store}>
-            <BrowserRouter>
-                <App/>
-            </BrowserRouter>
+            <React.Suspense fallback={<h1>Loading...</h1>}>
+                <BrowserRouter>
+                    <App/>
+                </BrowserRouter>
+            </React.Suspense>
         </Provider>
     </React.StrictMode>,
     document.getElementById('root')

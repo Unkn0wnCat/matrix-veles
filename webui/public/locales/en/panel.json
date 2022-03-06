@@ -1,0 +1,12 @@
+{
+  "jump_to_content": "Jump to Content",
+  "jump_to_navigation": "Jump to Navigation",
+  "documentation": "Documentation",
+  "navigation": {
+    "dashboard": "Dashboard",
+    "rooms": "My Rooms",
+    "hash_checker": "Hash-Checker",
+    "hash_lists": "Lists",
+    "hash_entries": "Entries"
+  }
+}
