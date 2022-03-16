@@ -4,13 +4,15 @@ go 1.16
 
 require (
 	github.com/766b/chi-prometheus v0.0.0-20211217152057-87afa9aa2ca8
+	github.com/99designs/gqlgen v0.17.1
 	github.com/go-chi/chi v1.5.4 // indirect
 	github.com/go-chi/chi/v5 v5.0.7
-	github.com/go-chi/cors v1.2.0 // indirect
+	github.com/go-chi/cors v1.2.0
 	github.com/golang-jwt/jwt/v4 v4.3.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
+	github.com/vektah/gqlparser/v2 v2.4.0
 	go.mongodb.org/mongo-driver v1.8.3
 	go.opentelemetry.io/otel v1.4.1
 	go.opentelemetry.io/otel/exporters/jaeger v1.4.1

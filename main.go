@@ -17,6 +17,8 @@
 
 package main
 
+//go:generate gqlgen generate
+
 import (
 	"github.com/Unkn0wnCat/matrix-veles/cmd"
 )

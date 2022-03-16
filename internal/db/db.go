@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
@@ -13,6 +14,7 @@ import (
 )
 
 var DbClient *mongo.Client
+var Db *mongo.Database
 
 func Connect() {
 	if viper.GetString("bot.mongo.uri") == "" {
@@ -20,15 +22,22 @@ func Connect() {
 		return
 	}
 
+	cmdMonitor := &event.CommandMonitor{
+		Started: func(_ context.Context, evt *event.CommandStartedEvent) {
+			log.Print(evt.Command)
+		},
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	newClient, err := mongo.Connect(ctx, options.Client().ApplyURI(viper.GetString("bot.mongo.uri")))
+	newClient, err := mongo.Connect(ctx, options.Client().ApplyURI(viper.GetString("bot.mongo.uri")).SetMonitor(cmdMonitor))
 	if err != nil {
 		log.Println("Could not connect to DB")
 		log.Panicln(err)
 	}
 
 	DbClient = newClient
+	Db = DbClient.Database(viper.GetString("bot.mongo.database"))
 }
 
 func SaveEntry(entry *model.DBEntry) error {

@@ -5,6 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	chiprometheus "github.com/766b/chi-prometheus"
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/Unkn0wnCat/matrix-veles/graph"
+	"github.com/Unkn0wnCat/matrix-veles/graph/generated"
+	"github.com/Unkn0wnCat/matrix-veles/internal/db/model"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"net/http"
@@ -25,9 +31,29 @@ func SetupAPI() chi.Router {
 
 	m := chiprometheus.NewMiddleware("api")
 	router.Use(m)
+	router.Use(decodeAuthMiddleware)
 
 	router.NotFound(notFoundHandler)
 	router.MethodNotAllowed(methodNotAllowedHandler)
+
+	router.Handle("/", playground.Handler("GraphQL playground", "/api/query"))
+
+	c := generated.Config{Resolvers: &graph.Resolver{}}
+	c.Directives.LoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+		claimsVal := ctx.Value("claims")
+		var claims model.JwtClaims
+		if claimsVal != nil {
+			claims = claimsVal.(model.JwtClaims)
+			if claims.Valid() == nil {
+				return next(ctx)
+			}
+		}
+
+		return nil, errors.New("authentication required")
+	}
+
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(c))
+	router.Handle("/query", srv)
 
 	//router.NotFoundHandler = NotFoundHandler{}
 	//router.MethodNotAllowedHandler = MethodNotAllowedHandler{}
@@ -72,7 +98,7 @@ func SetupAPI() chi.Router {
 		r.Get("/", func(writer http.ResponseWriter, request *http.Request) {
 			writer.WriteHeader(200)
 
-			claims := request.Context().Value("claims").(jwtClaims)
+			claims := request.Context().Value("claims").(model.JwtClaims)
 
 			writer.Write([]byte(`hello ` + claims.Username))
 		})
@@ -81,10 +107,36 @@ func SetupAPI() chi.Router {
 	return router
 }
 
-func getClaims(request *http.Request) jwtClaims {
-	claims := request.Context().Value("claims").(jwtClaims)
+func getClaims(request *http.Request) model.JwtClaims {
+	claims := request.Context().Value("claims").(model.JwtClaims)
 
 	return claims
+}
+
+func decodeAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		token := req.Header.Get("Authorization")
+		tokenSplit := strings.Split(token, " ")
+
+		if token == "" || len(tokenSplit) < 2 {
+			next.ServeHTTP(res, req)
+			return
+		}
+
+		token = tokenSplit[1]
+
+		claims, _, err := parseToken(token)
+		if err != nil {
+			next.ServeHTTP(res, req)
+			return
+		}
+
+		ctx := context.WithValue(req.Context(), "claims", *claims)
+
+		req = req.WithContext(ctx)
+
+		next.ServeHTTP(res, req)
+	})
 }
 
 func checkAuthMiddleware(next http.Handler) http.Handler {
