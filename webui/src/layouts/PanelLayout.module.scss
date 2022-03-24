@@ -1,0 +1,143 @@
+@import "../globals";
+
+.skipToContent {
+  opacity: 0;
+  pointer-events: none;
+  padding: var(--veles-layout-padding-slim);
+  background-color: var(--veles-color-background);
+  color: var(--veles-color-foreground);
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  &:focus {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@mixin panelTopBarLink {
+  padding: var(--veles-layout-padding-slim) var(--veles-layout-padding);
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+
+  transition: color .25s;
+
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  border: none;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  height: 65px;
+
+  &:hover, &.active, &:focus {
+    color: var(--veles-color-accent);
+  }
+
+  > svg {
+    margin-right: var(--veles-layout-padding);
+    width: 25px;
+    height: 25px;
+    stroke-width: 1;
+  }
+}
+
+.panel {
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--veles-color-background);
+  color: var(--veles-color-foreground);
+
+  display: flex;
+  flex-direction: column;
+  //overflow: hidden;
+
+  .topBar {
+    display: flex;
+    border-bottom: thin solid var(--veles-color-border);
+    height: 66px;
+
+    a {
+      @include panelTopBarLink;
+    }
+
+    .logo {
+      margin-right: auto;
+
+      > svg {
+        width: 40px;
+        height: 40px;
+      }
+    }
+  }
+
+  .content {
+    display: flex;
+    align-items: stretch;
+    flex-grow: 1;
+
+    > nav {
+      display: flex;
+      flex-direction: column;
+      border-right: thin solid var(--veles-color-border);
+      overflow-x: auto;
+      height: calc(100vh - 66px);
+      width: 250px;
+
+      >* {
+        flex-shrink: 0;
+      }
+
+      .dropdown {
+        height: 65px;
+        overflow: hidden;
+        transition: height .25s;
+
+        > button > svg {
+          transition: transform .25s;
+        }
+
+        > a {
+          display: none;
+          padding-left: var(--veles-layout-padding-wide)
+        }
+
+        &.expanded {
+          height: unset;
+
+          > a {
+            display: flex;
+          }
+
+          > button > svg {
+            transform: rotate(90deg);
+          }
+        }
+      }
+
+      a, button {
+        @include panelTopBarLink;
+        width: 100%;
+        padding: var(--veles-layout-padding);
+      }
+
+      button {
+        &:focus {
+          color: white;
+        }
+        &:active, &:hover {
+          color: var(--veles-color-accent);
+        }
+      }
+    }
+
+    > main {
+      padding: var(--veles-layout-padding)
+    }
+  }
+}

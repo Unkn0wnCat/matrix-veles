@@ -1,0 +1,282 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+scalar Time
+
+directive @loggedIn on FIELD_DEFINITION
+directive @hasRole(role: UserRole!) on FIELD_DEFINITION
+directive @owner on FIELD_DEFINITION
+directive @maintainer on FIELD_DEFINITION
+
+enum UserRole {
+    ADMIN
+    USER
+    UNAUTHENTICATED
+}
+
+enum SortDirection {
+    ASC
+    DESC
+}
+
+type PageInfo {
+    hasPreviousPage: Boolean!
+    hasNextPage: Boolean!
+    startCursor: String!
+    endCursor: String!
+}
+
+input SortRule {
+    direction: SortDirection!
+}
+
+type User {
+    id: ID!
+
+    username: String!
+
+    admin: Boolean
+
+    matrixLinks: [String!]
+    pendingMatrixLinks: [String!]
+}
+
+type UserConnection {
+    pageInfo: PageInfo!
+    edges: [UserEdge!]!
+}
+
+type UserEdge {
+    node: User!
+    cursor: String!
+}
+
+type Entry {
+    id: ID!
+    tags: [String!]
+    partOf(first: Int, after: String): ListConnection
+    hashValue: String!
+    timestamp: Time!
+    addedBy: User!
+    comments(first: Int, after: String): CommentConnection
+}
+
+type EntryConnection {
+    pageInfo: PageInfo!
+    edges: [EntryEdge!]!
+}
+
+type EntryEdge {
+    node: Entry!
+    cursor: String!
+}
+
+type List {
+    id: ID!
+    name: String!
+    tags: [String!]
+    creator: User!
+    comments(first: Int, after: String): CommentConnection
+    maintainers(first: Int, after: String): UserConnection!
+    entries(first: Int, after: String): EntryConnection
+}
+
+type ListConnection {
+    pageInfo: PageInfo!
+    edges: [ListEdge!]!
+}
+
+type ListEdge {
+    node: List!
+    cursor: String!
+}
+
+type Comment {
+    timestamp: Time!
+    author: User!
+    content: String!
+}
+
+type CommentConnection {
+    pageInfo: PageInfo!
+    edges: [CommentEdge!]!
+}
+
+type CommentEdge {
+    node: Comment!
+    cursor: String!
+}
+
+input IntFilter {
+    gt: Int
+    lt: Int
+    eq: Int
+    neq: Int
+}
+
+input TimestampFilter {
+    after: Time
+    before: Time
+}
+
+input StringFilter {
+    eq: String      # Equal
+    neq: String     # Not Equal
+    regex: String   # Regex Check
+}
+
+input StringArrayFilter {
+    containsAll: [String]
+    elemMatch: StringFilter
+    length: Int
+}
+
+input UserFilter {
+    id: ID
+    username: StringFilter
+    matrixLinks: StringArrayFilter
+    pendingMatrixLinks: StringArrayFilter
+    admin: Boolean
+}
+
+input UserArrayFilter {
+    containsAll: [UserFilter]
+    containsOne: [UserFilter]
+    length: Int
+}
+
+input UserSort {
+    id: SortRule
+    username: SortRule
+    admin: SortRule
+}
+
+input ListFilter {
+    id: ID
+    name: StringFilter
+    tags: StringArrayFilter
+    maintainers: IDArrayFilter
+    # entries: EntryArrayFilter
+}
+
+input IDArrayFilter {
+    containsAll: [ID]
+    length: Int
+}
+
+input ListArrayFilter {
+    containsAll: [ListFilter]
+    containsOne: [ListFilter]
+    length: Int
+}
+
+input ListSort {
+    id: SortRule
+    name: SortRule
+}
+
+input EntryFilter {
+    id: ID
+    hashValue: StringFilter
+    tags: StringArrayFilter
+    addedBy: ID
+    timestamp: TimestampFilter
+    partOf: IDArrayFilter
+}
+
+input EntryArrayFilter {
+    containsAll: [EntryFilter]
+    containsOne: [EntryFilter]
+    length: Int
+}
+
+input EntrySort {
+    id: SortRule
+    hashValue: SortRule
+    timestamp: SortRule
+    addedBy: SortRule
+}
+
+type Query {
+    users(first: Int, after: String, filter: UserFilter, sort: UserSort): UserConnection! @loggedIn
+    lists(first: Int, after: String, filter: ListFilter, sort: ListSort): ListConnection! @loggedIn
+    entries(first: Int, after: String, filter: EntryFilter, sort: EntrySort): EntryConnection! @loggedIn
+
+    user(id: ID, username: String): User! @loggedIn
+    entry(id: ID, hashValue: String): Entry! @loggedIn
+    list(id: ID, name: String): List! @loggedIn
+
+    self: User! @loggedIn
+}
+
+input Login {
+    username: String!
+    password: String!
+}
+
+input Register {
+    username: String!
+    password: String!
+    mxID: String!
+}
+
+input CreateEntry {
+    tags: [String!]
+    partOf: [ID!]
+    hashValue: String!
+    comment: String
+}
+
+input CommentEntry {
+    entry: ID!
+    comment: String!
+}
+
+input CreateList {
+    name: String!
+    tags: [String!]
+    comment: String
+    maintainers: [ID!]
+    entries: [ID!]
+}
+
+input CommentList {
+    list: ID!
+    comment: String!
+}
+
+input AddToLists {
+    lists: [ID!]!
+    entry: ID!
+}
+
+input RemoveFromLists {
+    lists: [ID!]!
+    entry: ID!
+}
+
+input AddMXID {
+    mxid: String!
+}
+
+input RemoveMXID {
+    mxid: String!
+}
+
+type Mutation {
+    login(input: Login!): String!
+    register(input: Register!): String! @hasRole(role: UNAUTHENTICATED)
+    addMXID(input: AddMXID!): User! @loggedIn
+    removeMXID(input: RemoveMXID!): User! @loggedIn
+
+    createEntry(input: CreateEntry!): Entry! @loggedIn
+    commentEntry(input: CommentEntry!): Entry! @loggedIn
+    addToLists(input: AddToLists!): Entry! @loggedIn
+    removeFromLists(input: RemoveFromLists!): Entry! @loggedIn
+
+    createList(input: CreateList!): List! @loggedIn
+    commentList(input: CommentList!): List! @loggedIn
+    deleteList(input: ID!): Boolean! @loggedIn @owner
+
+}

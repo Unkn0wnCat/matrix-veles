@@ -1,0 +1,42 @@
+query {
+    entries(first:2) {
+        pageInfo {
+            hasPreviousPage
+            hasNextPage
+            startCursor
+            endCursor
+        }
+        edges {
+            node {
+                id
+                tags
+                timestamp
+                comments {
+                    edges {
+                        node {
+                            author {
+                                id
+                            }
+                            content
+                            timestamp
+                        }
+                    }
+                }
+                partOf {
+                    edges {
+                        node {
+                            id
+                            maintainers {
+                                edges {
+                                    node {
+                                        username
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

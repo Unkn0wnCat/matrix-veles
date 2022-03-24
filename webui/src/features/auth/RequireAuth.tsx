@@ -1,4 +1,4 @@
-import React, {ReactNode} from "react";
+import React from "react";
 import {useAppSelector} from "../../app/hooks";
 import {selectAuth} from "./authSlice";
 import {useLocation} from "react-router-dom";

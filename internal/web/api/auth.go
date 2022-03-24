@@ -18,13 +18,8 @@ type apiAuthRequestBody struct {
 	Password string `json:"password"`
 }
 
-type jwtClaims struct {
-	Username string `json:"username"`
-	jwt.RegisteredClaims
-}
-
-func parseToken(tokenString string) (*jwtClaims, *jwt.Token, error) {
-	claims := jwtClaims{}
+func parseToken(tokenString string) (*model.JwtClaims, *jwt.Token, error) {
+	claims := model.JwtClaims{}
 	jwtSigningKey := []byte(viper.GetString("bot.web.secret"))
 
 	token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
@@ -67,7 +62,7 @@ func apiHandleAuthLogin(res http.ResponseWriter, req *http.Request) {
 
 	jwtSigningKey := []byte(viper.GetString("bot.web.secret"))
 
-	claims := jwtClaims{
+	claims := model.JwtClaims{
 		Username: user.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 365 * 100)),
@@ -143,7 +138,7 @@ func apiHandleAuthRegister(res http.ResponseWriter, req *http.Request) {
 
 	jwtSigningKey := viper.GetString("bot.web.secret")
 
-	claims := jwtClaims{
+	claims := model.JwtClaims{
 		Username: user.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
