@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
+	"regexp"
 	"time"
 )
 
@@ -235,7 +236,12 @@ func GetUserByID(id primitive.ObjectID) (*model.DBUser, error) {
 func GetUserByUsername(username string) (*model.DBUser, error) {
 	db := DbClient.Database(viper.GetString("bot.mongo.database"))
 
-	res := db.Collection(viper.GetString("bot.mongo.collection.users")).FindOne(context.TODO(), bson.D{{"username", username}})
+	regexPattern := "^" + regexp.QuoteMeta(username) + "$"
+
+	res := db.Collection(viper.GetString("bot.mongo.collection.users")).FindOne(context.TODO(), bson.D{{"username", primitive.Regex{
+		Pattern: regexPattern,
+		Options: "i",
+	}}})
 	if res.Err() != nil {
 		return nil, res.Err()
 	}

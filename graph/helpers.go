@@ -12,6 +12,30 @@ import (
 	"time"
 )
 
+func PerformListMaintainerCheck(listIdHex string, userIdHex string) error {
+	id, err := primitive.ObjectIDFromHex(listIdHex)
+	if err != nil {
+		return err
+	}
+
+	list, err := db.GetListByID(id)
+	if err != nil {
+		return err
+	}
+
+	if list.Creator.Hex() == userIdHex {
+		return nil
+	}
+
+	for _, maintainerId := range list.Maintainers {
+		if maintainerId.Hex() == userIdHex {
+			return nil
+		}
+	}
+
+	return errors.New("unauthorized")
+}
+
 func GetUserFromContext(ctx context.Context) (*model2.DBUser, error) {
 	userID, err := GetUserIDFromContext(ctx)
 	if err != nil {

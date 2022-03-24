@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 	"time"
 
 	"github.com/Unkn0wnCat/matrix-veles/graph/generated"
@@ -130,7 +131,12 @@ func (r *entryResolver) Comments(ctx context.Context, obj *model.Entry, first *i
 }
 
 func (r *listResolver) Creator(ctx context.Context, obj *model.List) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := db.GetUserByID(obj.CreatorID)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	return model.MakeUser(user), nil
 }
 
 func (r *listResolver) Comments(ctx context.Context, obj *model.List, first *int, after *string) (*model.CommentConnection, error) {
@@ -330,39 +336,342 @@ func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string
 }
 
 func (r *mutationResolver) Register(ctx context.Context, input model.Register) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	_, err := db.GetUserByUsername(input.Username)
+	if !errors.Is(err, mongo.ErrNoDocuments) {
+		return "", errors.New("username taken")
+	}
+
+	user := model2.DBUser{
+		ID:                 primitive.NewObjectID(),
+		Username:           input.Username,
+		PendingMatrixLinks: []*string{&input.MxID},
+		Password:           &input.Password,
+	}
+
+	err = user.HashPassword()
+	if err != nil {
+		return "", errors.New("server error")
+	}
+
+	err = db.SaveUser(&user)
+	if err != nil {
+		return "", errors.New("database error")
+	}
+
+	jwtSigningKey := []byte(viper.GetString("bot.web.secret"))
+
+	claims := model2.JwtClaims{
+		Username: user.Username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 365 * 100)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    "veles-api",
+			Subject:   user.ID.Hex(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString(jwtSigningKey)
+	if err != nil {
+		return "", errors.New("unable to create token")
+	}
+
+	return ss, nil
 }
 
 func (r *mutationResolver) AddMxid(ctx context.Context, input model.AddMxid) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, mxid := range append(user.MatrixLinks, user.PendingMatrixLinks...) {
+		if strings.EqualFold(*mxid, input.Mxid) {
+			return model.MakeUser(user), nil
+		}
+	}
+
+	user.PendingMatrixLinks = append(user.PendingMatrixLinks, &input.Mxid)
+
+	err = db.SaveUser(user)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	return model.MakeUser(user), nil
 }
 
 func (r *mutationResolver) RemoveMxid(ctx context.Context, input model.RemoveMxid) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, mxid := range user.MatrixLinks {
+		if strings.EqualFold(*mxid, input.Mxid) {
+			user.MatrixLinks = append(user.MatrixLinks[:i], user.MatrixLinks[i+1:]...)
+		}
+	}
+
+	for i, mxid := range user.PendingMatrixLinks {
+		if strings.EqualFold(*mxid, input.Mxid) {
+			user.PendingMatrixLinks = append(user.PendingMatrixLinks[:i], user.PendingMatrixLinks[i+1:]...)
+		}
+	}
+
+	err = db.SaveUser(user)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	return model.MakeUser(user), nil
 }
 
 func (r *mutationResolver) CreateEntry(ctx context.Context, input model.CreateEntry) (*model.Entry, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	entry, err := db.GetEntryByHash(input.HashValue)
+	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, errors.New("database error")
+	}
+
+	if entry == nil {
+		entry = &model2.DBEntry{
+			ID:        primitive.NewObjectID(),
+			Tags:      input.Tags,
+			HashValue: input.HashValue,
+			Timestamp: time.Now(),
+			AddedBy:   &user.ID,
+			Comments:  nil,
+		}
+	}
+
+	if len(input.PartOf) > 0 {
+		for _, partOfId := range input.PartOf {
+			err = PerformListMaintainerCheck(partOfId, user.ID.Hex())
+			if err != nil {
+				return nil, errors.New("error adding to lists")
+			}
+
+			partOf, _ := primitive.ObjectIDFromHex(partOfId) // This can't fail, it worked in PerformListMaintainerCheck
+			entry.AddTo(&partOf)
+		}
+	}
+
+	if input.Comment != nil {
+		entry.Comments = append(entry.Comments, &model2.DBComment{
+			Timestamp:   time.Now(),
+			CommentedBy: &user.ID,
+			Content:     *input.Comment,
+		})
+	}
+
+	err = db.SaveEntry(entry)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	return model.MakeEntry(entry), nil
 }
 
 func (r *mutationResolver) CommentEntry(ctx context.Context, input model.CommentEntry) (*model.Entry, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := primitive.ObjectIDFromHex(input.Entry)
+	if err != nil {
+		return nil, err
+	}
+
+	entry, err := db.GetEntryByID(id)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New("not found")
+		}
+		return nil, errors.New("database error")
+	}
+
+	entry.Comments = append(entry.Comments, &model2.DBComment{
+		Timestamp:   time.Now(),
+		CommentedBy: &user.ID,
+		Content:     input.Comment,
+	})
+
+	err = db.SaveEntry(entry)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	return model.MakeEntry(entry), nil
 }
 
-func (r *mutationResolver) DeleteEntry(ctx context.Context, input string) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) AddToLists(ctx context.Context, input model.AddToLists) (*model.Entry, error) {
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := primitive.ObjectIDFromHex(input.Entry)
+	if err != nil {
+		return nil, err
+	}
+
+	entry, err := db.GetEntryByID(id)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New("not found")
+		}
+		return nil, errors.New("database error")
+	}
+
+	if len(input.Lists) > 0 {
+		for _, partOfId := range input.Lists {
+			err = PerformListMaintainerCheck(partOfId, user.ID.Hex())
+			if err != nil {
+				return nil, errors.New("error adding to lists")
+			}
+
+			partOf, _ := primitive.ObjectIDFromHex(partOfId) // This can't fail, it worked in PerformListMaintainerCheck
+			entry.AddTo(&partOf)
+		}
+	}
+
+	err = db.SaveEntry(entry)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	return model.MakeEntry(entry), nil
+}
+
+func (r *mutationResolver) RemoveFromLists(ctx context.Context, input model.RemoveFromLists) (*model.Entry, error) {
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := primitive.ObjectIDFromHex(input.Entry)
+	if err != nil {
+		return nil, err
+	}
+
+	entry, err := db.GetEntryByID(id)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New("not found")
+		}
+		return nil, errors.New("database error")
+	}
+
+	if len(input.Lists) > 0 {
+		for _, partOfId := range input.Lists {
+			err = PerformListMaintainerCheck(partOfId, user.ID.Hex())
+			if err != nil {
+				return nil, errors.New("error adding to lists")
+			}
+
+			partOf, _ := primitive.ObjectIDFromHex(partOfId) // This can't fail, it worked in PerformListMaintainerCheck
+			entry.RemoveFrom(&partOf)
+		}
+	}
+
+	err = db.SaveEntry(entry)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	return model.MakeEntry(entry), nil
 }
 
 func (r *mutationResolver) CreateList(ctx context.Context, input model.CreateList) (*model.List, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = db.GetListByName(input.Name)
+	if !errors.Is(err, mongo.ErrNoDocuments) {
+		return nil, errors.New("name taken")
+	}
+
+	list := model2.DBHashList{
+		ID:      primitive.NewObjectID(),
+		Name:    input.Name,
+		Tags:    input.Tags,
+		Creator: user.ID,
+	}
+
+	for _, maintainer := range input.Maintainers {
+		id, err := primitive.ObjectIDFromHex(maintainer)
+		if err != nil {
+			return nil, err
+		}
+
+		maintainerUser, err := db.GetUserByID(id)
+		if err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				return nil, errors.New("maintainer not found")
+			}
+
+			return nil, errors.New("database error")
+		}
+
+		list.Maintainers = append(list.Maintainers, &maintainerUser.ID)
+	}
+
+	if input.Comment != nil {
+		list.Comments = append(list.Comments, &model2.DBComment{
+			Timestamp:   time.Now(),
+			CommentedBy: &user.ID,
+			Content:     *input.Comment,
+		})
+	}
+
+	err = db.SaveList(&list)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	return model.MakeList(&list), nil
 }
 
 func (r *mutationResolver) CommentList(ctx context.Context, input model.CommentList) (*model.List, error) {
-	panic(fmt.Errorf("not implemented"))
-}
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-func (r *mutationResolver) AddToList(ctx context.Context, input model.AddToList) (*model.List, error) {
-	panic(fmt.Errorf("not implemented"))
+	id, err := primitive.ObjectIDFromHex(input.List)
+	if err != nil {
+		return nil, err
+	}
+
+	list, err := db.GetListByID(id)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New("not found")
+		}
+		return nil, errors.New("database error")
+	}
+
+	list.Comments = append(list.Comments, &model2.DBComment{
+		Timestamp:   time.Now(),
+		CommentedBy: &user.ID,
+		Content:     input.Comment,
+	})
+
+	err = db.SaveList(list)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	return model.MakeList(list), nil
 }
 
 func (r *mutationResolver) DeleteList(ctx context.Context, input string) (bool, error) {

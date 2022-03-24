@@ -246,9 +246,14 @@ input CommentList {
     comment: String!
 }
 
-input AddToList {
-    list: ID!
-    entries: [ID!]!
+input AddToLists {
+    lists: [ID!]!
+    entry: ID!
+}
+
+input RemoveFromLists {
+    lists: [ID!]!
+    entry: ID!
 }
 
 input AddMXID {
@@ -267,11 +272,11 @@ type Mutation {
 
     createEntry(input: CreateEntry!): Entry! @loggedIn
     commentEntry(input: CommentEntry!): Entry! @loggedIn
-    deleteEntry(input: ID!): Boolean! @loggedIn @hasRole(role: ADMIN)
+    addToLists(input: AddToLists!): Entry! @loggedIn
+    removeFromLists(input: RemoveFromLists!): Entry! @loggedIn
 
     createList(input: CreateList!): List! @loggedIn
     commentList(input: CommentList!): List! @loggedIn
-    addToList(input: AddToList!): List! @loggedIn @maintainer
     deleteList(input: ID!): Boolean! @loggedIn @owner
 
 }

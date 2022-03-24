@@ -11,6 +11,7 @@ type List struct {
 	Tags          []string `json:"tags"`
 	RawComments   []*model.DBComment
 	MaintainerIDs []*primitive.ObjectID
+	CreatorID     primitive.ObjectID
 }
 
 func MakeList(dbList *model.DBHashList) *List {
@@ -20,5 +21,6 @@ func MakeList(dbList *model.DBHashList) *List {
 		Tags:          dbList.Tags,
 		RawComments:   dbList.Comments,
 		MaintainerIDs: dbList.Maintainers,
+		CreatorID:     dbList.Creator,
 	}
 }

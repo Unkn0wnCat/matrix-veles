@@ -13,9 +13,9 @@ type AddMxid struct {
 	Mxid string `json:"mxid"`
 }
 
-type AddToList struct {
-	List    string   `json:"list"`
-	Entries []string `json:"entries"`
+type AddToLists struct {
+	Lists []string `json:"lists"`
+	Entry string   `json:"entry"`
 }
 
 type CommentConnection struct {
@@ -141,6 +141,11 @@ type Register struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	MxID     string `json:"mxID"`
+}
+
+type RemoveFromLists struct {
+	Lists []string `json:"lists"`
+	Entry string   `json:"entry"`
 }
 
 type RemoveMxid struct {

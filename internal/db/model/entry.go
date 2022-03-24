@@ -15,3 +15,24 @@ type DBEntry struct {
 	AddedBy   *primitive.ObjectID `bson:"added_by" json:"added_by"`   // AddedBy is a reference to the user who added this
 	Comments  []*DBComment        `bson:"comments" json:"comments"`   // Comments regarding this entry
 }
+
+func (entry *DBEntry) AddTo(id *primitive.ObjectID) {
+	for _, addedTo := range entry.PartOf {
+		if addedTo.Hex() == id.Hex() {
+			return
+		}
+	}
+
+	entry.PartOf = append(entry.PartOf, id)
+}
+
+func (entry *DBEntry) RemoveFrom(id *primitive.ObjectID) {
+	for i, addedTo := range entry.PartOf {
+		if addedTo.Hex() == id.Hex() {
+			entry.PartOf = append(entry.PartOf[:i], entry.PartOf[i+1:]...)
+			return
+		}
+	}
+
+	return
+}

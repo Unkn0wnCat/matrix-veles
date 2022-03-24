@@ -109,17 +109,17 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddMxid      func(childComplexity int, input model.AddMxid) int
-		AddToList    func(childComplexity int, input model.AddToList) int
-		CommentEntry func(childComplexity int, input model.CommentEntry) int
-		CommentList  func(childComplexity int, input model.CommentList) int
-		CreateEntry  func(childComplexity int, input model.CreateEntry) int
-		CreateList   func(childComplexity int, input model.CreateList) int
-		DeleteEntry  func(childComplexity int, input string) int
-		DeleteList   func(childComplexity int, input string) int
-		Login        func(childComplexity int, input model.Login) int
-		Register     func(childComplexity int, input model.Register) int
-		RemoveMxid   func(childComplexity int, input model.RemoveMxid) int
+		AddMxid         func(childComplexity int, input model.AddMxid) int
+		AddToLists      func(childComplexity int, input model.AddToLists) int
+		CommentEntry    func(childComplexity int, input model.CommentEntry) int
+		CommentList     func(childComplexity int, input model.CommentList) int
+		CreateEntry     func(childComplexity int, input model.CreateEntry) int
+		CreateList      func(childComplexity int, input model.CreateList) int
+		DeleteList      func(childComplexity int, input string) int
+		Login           func(childComplexity int, input model.Login) int
+		Register        func(childComplexity int, input model.Register) int
+		RemoveFromLists func(childComplexity int, input model.RemoveFromLists) int
+		RemoveMxid      func(childComplexity int, input model.RemoveMxid) int
 	}
 
 	PageInfo struct {
@@ -180,10 +180,10 @@ type MutationResolver interface {
 	RemoveMxid(ctx context.Context, input model.RemoveMxid) (*model.User, error)
 	CreateEntry(ctx context.Context, input model.CreateEntry) (*model.Entry, error)
 	CommentEntry(ctx context.Context, input model.CommentEntry) (*model.Entry, error)
-	DeleteEntry(ctx context.Context, input string) (bool, error)
+	AddToLists(ctx context.Context, input model.AddToLists) (*model.Entry, error)
+	RemoveFromLists(ctx context.Context, input model.RemoveFromLists) (*model.Entry, error)
 	CreateList(ctx context.Context, input model.CreateList) (*model.List, error)
 	CommentList(ctx context.Context, input model.CommentList) (*model.List, error)
-	AddToList(ctx context.Context, input model.AddToList) (*model.List, error)
 	DeleteList(ctx context.Context, input string) (bool, error)
 }
 type QueryResolver interface {
@@ -451,17 +451,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AddMxid(childComplexity, args["input"].(model.AddMxid)), true
 
-	case "Mutation.addToList":
-		if e.complexity.Mutation.AddToList == nil {
+	case "Mutation.addToLists":
+		if e.complexity.Mutation.AddToLists == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_addToList_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_addToLists_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddToList(childComplexity, args["input"].(model.AddToList)), true
+		return e.complexity.Mutation.AddToLists(childComplexity, args["input"].(model.AddToLists)), true
 
 	case "Mutation.commentEntry":
 		if e.complexity.Mutation.CommentEntry == nil {
@@ -511,18 +511,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateList(childComplexity, args["input"].(model.CreateList)), true
 
-	case "Mutation.deleteEntry":
-		if e.complexity.Mutation.DeleteEntry == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteEntry_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteEntry(childComplexity, args["input"].(string)), true
-
 	case "Mutation.deleteList":
 		if e.complexity.Mutation.DeleteList == nil {
 			break
@@ -558,6 +546,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Register(childComplexity, args["input"].(model.Register)), true
+
+	case "Mutation.removeFromLists":
+		if e.complexity.Mutation.RemoveFromLists == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeFromLists_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveFromLists(childComplexity, args["input"].(model.RemoveFromLists)), true
 
 	case "Mutation.removeMXID":
 		if e.complexity.Mutation.RemoveMxid == nil {
@@ -846,7 +846,7 @@ type User {
     admin: Boolean
 
     matrixLinks: [String!]
-    pendingMatrixLinks: [String!] @owner
+    pendingMatrixLinks: [String!]
 }
 
 type UserConnection {
@@ -1053,9 +1053,14 @@ input CommentList {
     comment: String!
 }
 
-input AddToList {
-    list: ID!
-    entries: [ID!]!
+input AddToLists {
+    lists: [ID!]!
+    entry: ID!
+}
+
+input RemoveFromLists {
+    lists: [ID!]!
+    entry: ID!
 }
 
 input AddMXID {
@@ -1074,11 +1079,11 @@ type Mutation {
 
     createEntry(input: CreateEntry!): Entry! @loggedIn
     commentEntry(input: CommentEntry!): Entry! @loggedIn
-    deleteEntry(input: ID!): Boolean! @loggedIn @hasRole(role: ADMIN)
+    addToLists(input: AddToLists!): Entry! @loggedIn
+    removeFromLists(input: RemoveFromLists!): Entry! @loggedIn
 
     createList(input: CreateList!): List! @loggedIn
     commentList(input: CommentList!): List! @loggedIn
-    addToList(input: AddToList!): List! @loggedIn @maintainer
     deleteList(input: ID!): Boolean! @loggedIn @owner
 
 }
@@ -1240,13 +1245,13 @@ func (ec *executionContext) field_Mutation_addMXID_args(ctx context.Context, raw
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_addToList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_addToLists_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.AddToList
+	var arg0 model.AddToLists
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAddToList2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐAddToList(ctx, tmp)
+		arg0, err = ec.unmarshalNAddToLists2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐAddToLists(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1315,21 +1320,6 @@ func (ec *executionContext) field_Mutation_createList_args(ctx context.Context, 
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_deleteList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1367,6 +1357,21 @@ func (ec *executionContext) field_Mutation_register_args(ctx context.Context, ra
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNRegister2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRegister(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeFromLists_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.RemoveFromLists
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNRemoveFromLists2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRemoveFromLists(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3029,7 +3034,7 @@ func (ec *executionContext) _Mutation_commentEntry(ctx context.Context, field gr
 	return ec.marshalNEntry2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntry(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_deleteEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Mutation_addToLists(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3046,7 +3051,7 @@ func (ec *executionContext) _Mutation_deleteEntry(ctx context.Context, field gra
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_deleteEntry_args(ctx, rawArgs)
+	args, err := ec.field_Mutation_addToLists_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -3055,7 +3060,7 @@ func (ec *executionContext) _Mutation_deleteEntry(ctx context.Context, field gra
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().DeleteEntry(rctx, args["input"].(string))
+			return ec.resolvers.Mutation().AddToLists(rctx, args["input"].(model.AddToLists))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.LoggedIn == nil {
@@ -3063,28 +3068,18 @@ func (ec *executionContext) _Mutation_deleteEntry(ctx context.Context, field gra
 			}
 			return ec.directives.LoggedIn(ctx, nil, directive0)
 		}
-		directive2 := func(ctx context.Context) (interface{}, error) {
-			role, err := ec.unmarshalNUserRole2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUserRole(ctx, "ADMIN")
-			if err != nil {
-				return nil, err
-			}
-			if ec.directives.HasRole == nil {
-				return nil, errors.New("directive hasRole is not implemented")
-			}
-			return ec.directives.HasRole(ctx, nil, directive1, role)
-		}
 
-		tmp, err := directive2(rctx)
+		tmp, err := directive1(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(bool); ok {
+		if data, ok := tmp.(*model.Entry); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.Entry`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3096,9 +3091,71 @@ func (ec *executionContext) _Mutation_deleteEntry(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*model.Entry)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNEntry2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_removeFromLists(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_removeFromLists_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().RemoveFromLists(rctx, args["input"].(model.RemoveFromLists))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Entry); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.Entry`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Entry)
+	fc.Result = res
+	return ec.marshalNEntry2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntry(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3199,74 +3256,6 @@ func (ec *executionContext) _Mutation_commentList(ctx context.Context, field gra
 		}
 
 		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*model.List); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.List`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.List)
-	fc.Result = res
-	return ec.marshalNList2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_addToList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_addToList_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().AddToList(rctx, args["input"].(model.AddToList))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.LoggedIn == nil {
-				return nil, errors.New("directive loggedIn is not implemented")
-			}
-			return ec.directives.LoggedIn(ctx, nil, directive0)
-		}
-		directive2 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.Maintainer == nil {
-				return nil, errors.New("directive maintainer is not implemented")
-			}
-			return ec.directives.Maintainer(ctx, nil, directive1)
-		}
-
-		tmp, err := directive2(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -4150,28 +4139,8 @@ func (ec *executionContext) _User_pendingMatrixLinks(ctx context.Context, field 
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return obj.PendingMatrixLinks, nil
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.Owner == nil {
-				return nil, errors.New("directive owner is not implemented")
-			}
-			return ec.directives.Owner(ctx, obj, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.([]*string); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*string`, tmp)
+		ctx = rctx // use context from middleware stack in children
+		return obj.PendingMatrixLinks, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5470,8 +5439,8 @@ func (ec *executionContext) unmarshalInputAddMXID(ctx context.Context, obj inter
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputAddToList(ctx context.Context, obj interface{}) (model.AddToList, error) {
-	var it model.AddToList
+func (ec *executionContext) unmarshalInputAddToLists(ctx context.Context, obj interface{}) (model.AddToLists, error) {
+	var it model.AddToLists
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -5479,19 +5448,19 @@ func (ec *executionContext) unmarshalInputAddToList(ctx context.Context, obj int
 
 	for k, v := range asMap {
 		switch k {
-		case "list":
+		case "lists":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("list"))
-			it.List, err = ec.unmarshalNID2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lists"))
+			it.Lists, err = ec.unmarshalNID2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "entries":
+		case "entry":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entries"))
-			it.Entries, err = ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entry"))
+			it.Entry, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6070,6 +6039,37 @@ func (ec *executionContext) unmarshalInputRegister(ctx context.Context, obj inte
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mxID"))
 			it.MxID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRemoveFromLists(ctx context.Context, obj interface{}) (model.RemoveFromLists, error) {
+	var it model.RemoveFromLists
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "lists":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lists"))
+			it.Lists, err = ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "entry":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entry"))
+			it.Entry, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6817,8 +6817,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "deleteEntry":
-			out.Values[i] = ec._Mutation_deleteEntry(ctx, field)
+		case "addToLists":
+			out.Values[i] = ec._Mutation_addToLists(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removeFromLists":
+			out.Values[i] = ec._Mutation_removeFromLists(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -6829,11 +6834,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "commentList":
 			out.Values[i] = ec._Mutation_commentList(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "addToList":
-			out.Values[i] = ec._Mutation_addToList(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -7380,8 +7380,8 @@ func (ec *executionContext) unmarshalNAddMXID2githubᚗcomᚋUnkn0wnCatᚋmatrix
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNAddToList2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐAddToList(ctx context.Context, v interface{}) (model.AddToList, error) {
-	res, err := ec.unmarshalInputAddToList(ctx, v)
+func (ec *executionContext) unmarshalNAddToLists2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐAddToLists(ctx context.Context, v interface{}) (model.AddToLists, error) {
+	res, err := ec.unmarshalInputAddToLists(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -7716,6 +7716,11 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatr
 
 func (ec *executionContext) unmarshalNRegister2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRegister(ctx context.Context, v interface{}) (model.Register, error) {
 	res, err := ec.unmarshalInputRegister(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNRemoveFromLists2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRemoveFromLists(ctx context.Context, v interface{}) (model.RemoveFromLists, error) {
+	res, err := ec.unmarshalInputRemoveFromLists(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
