@@ -129,6 +129,10 @@ func (r *entryResolver) Comments(ctx context.Context, obj *model.Entry, first *i
 	return ResolveComments(comments, first, after)
 }
 
+func (r *listResolver) Creator(ctx context.Context, obj *model.List) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *listResolver) Comments(ctx context.Context, obj *model.List, first *int, after *string) (*model.CommentConnection, error) {
 	comments := obj.RawComments
 
@@ -323,6 +327,46 @@ func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string
 	}
 
 	return ss, nil
+}
+
+func (r *mutationResolver) Register(ctx context.Context, input model.Register) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) AddMxid(ctx context.Context, input model.AddMxid) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) RemoveMxid(ctx context.Context, input model.RemoveMxid) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) CreateEntry(ctx context.Context, input model.CreateEntry) (*model.Entry, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) CommentEntry(ctx context.Context, input model.CommentEntry) (*model.Entry, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) DeleteEntry(ctx context.Context, input string) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) CreateList(ctx context.Context, input model.CreateList) (*model.List, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) CommentList(ctx context.Context, input model.CommentList) (*model.List, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) AddToList(ctx context.Context, input model.AddToList) (*model.List, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) DeleteList(ctx context.Context, input string) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) Users(ctx context.Context, first *int, after *string, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error) {
@@ -652,6 +696,15 @@ func (r *queryResolver) List(ctx context.Context, id *string, name *string) (*mo
 	return nil, errors.New("not found")
 }
 
+func (r *queryResolver) Self(ctx context.Context) (*model.User, error) {
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, errors.New("invalid session")
+	}
+
+	return model.MakeUser(user), nil
+}
+
 // Comment returns generated.CommentResolver implementation.
 func (r *Resolver) Comment() generated.CommentResolver { return &commentResolver{r} }
 
@@ -672,16 +725,3 @@ type entryResolver struct{ *Resolver }
 type listResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *commentResolver) Timestamp(ctx context.Context, obj *model.Comment) (*time.Time, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-func (r *entryResolver) Timestamp(ctx context.Context, obj *model.Entry) (*time.Time, error) {
-	panic(fmt.Errorf("not implemented"))
-}

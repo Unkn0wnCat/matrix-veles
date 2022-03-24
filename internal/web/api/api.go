@@ -10,6 +10,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/Unkn0wnCat/matrix-veles/graph"
 	"github.com/Unkn0wnCat/matrix-veles/graph/generated"
+	model2 "github.com/Unkn0wnCat/matrix-veles/graph/model"
 	"github.com/Unkn0wnCat/matrix-veles/internal/db/model"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -49,7 +50,43 @@ func SetupAPI() chi.Router {
 			}
 		}
 
-		return nil, errors.New("authentication required")
+		return nil, errors.New("authorization required")
+	}
+
+	c.Directives.HasRole = func(ctx context.Context, obj interface{}, next graphql.Resolver, role model2.UserRole) (res interface{}, err error) {
+		user, err := graph.GetUserFromContext(ctx)
+		if err != nil {
+			if role == model2.UserRoleUnauthenticated {
+				return next(ctx)
+			}
+			return nil, errors.New("authorization required")
+		}
+
+		switch role {
+		case model2.UserRoleUser:
+			return next(ctx)
+		case model2.UserRoleAdmin:
+			if user.Admin != nil && *user.Admin {
+				return next(ctx)
+			}
+		case model2.UserRoleUnauthenticated:
+			break
+		default:
+			return nil, errors.New("server error")
+		}
+
+		return nil, errors.New("unauthorized")
+	}
+
+	c.Directives.Owner = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+		user, err := graph.GetUserFromContext(ctx)
+		if err != nil {
+			return nil, errors.New("authorization required")
+		}
+
+		ctx2 := context.WithValue(ctx, "ownerConstraint", user.ID.Hex())
+
+		return next(ctx2)
 	}
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(c))

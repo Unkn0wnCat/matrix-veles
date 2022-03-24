@@ -45,7 +45,10 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	LoggedIn func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	HasRole    func(ctx context.Context, obj interface{}, next graphql.Resolver, role model.UserRole) (res interface{}, err error)
+	LoggedIn   func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	Maintainer func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	Owner      func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -68,7 +71,6 @@ type ComplexityRoot struct {
 	Entry struct {
 		AddedBy   func(childComplexity int) int
 		Comments  func(childComplexity int, first *int, after *string) int
-		FileURL   func(childComplexity int) int
 		HashValue func(childComplexity int) int
 		ID        func(childComplexity int) int
 		PartOf    func(childComplexity int, first *int, after *string) int
@@ -88,6 +90,7 @@ type ComplexityRoot struct {
 
 	List struct {
 		Comments    func(childComplexity int, first *int, after *string) int
+		Creator     func(childComplexity int) int
 		Entries     func(childComplexity int, first *int, after *string) int
 		ID          func(childComplexity int) int
 		Maintainers func(childComplexity int, first *int, after *string) int
@@ -106,7 +109,17 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		Login func(childComplexity int, input model.Login) int
+		AddMxid      func(childComplexity int, input model.AddMxid) int
+		AddToList    func(childComplexity int, input model.AddToList) int
+		CommentEntry func(childComplexity int, input model.CommentEntry) int
+		CommentList  func(childComplexity int, input model.CommentList) int
+		CreateEntry  func(childComplexity int, input model.CreateEntry) int
+		CreateList   func(childComplexity int, input model.CreateList) int
+		DeleteEntry  func(childComplexity int, input string) int
+		DeleteList   func(childComplexity int, input string) int
+		Login        func(childComplexity int, input model.Login) int
+		Register     func(childComplexity int, input model.Register) int
+		RemoveMxid   func(childComplexity int, input model.RemoveMxid) int
 	}
 
 	PageInfo struct {
@@ -121,6 +134,7 @@ type ComplexityRoot struct {
 		Entry   func(childComplexity int, id *string, hashValue *string) int
 		List    func(childComplexity int, id *string, name *string) int
 		Lists   func(childComplexity int, first *int, after *string, filter *model.ListFilter, sort *model.ListSort) int
+		Self    func(childComplexity int) int
 		User    func(childComplexity int, id *string, username *string) int
 		Users   func(childComplexity int, first *int, after *string, filter *model.UserFilter, sort *model.UserSort) int
 	}
@@ -154,12 +168,23 @@ type EntryResolver interface {
 	Comments(ctx context.Context, obj *model.Entry, first *int, after *string) (*model.CommentConnection, error)
 }
 type ListResolver interface {
+	Creator(ctx context.Context, obj *model.List) (*model.User, error)
 	Comments(ctx context.Context, obj *model.List, first *int, after *string) (*model.CommentConnection, error)
 	Maintainers(ctx context.Context, obj *model.List, first *int, after *string) (*model.UserConnection, error)
 	Entries(ctx context.Context, obj *model.List, first *int, after *string) (*model.EntryConnection, error)
 }
 type MutationResolver interface {
 	Login(ctx context.Context, input model.Login) (string, error)
+	Register(ctx context.Context, input model.Register) (string, error)
+	AddMxid(ctx context.Context, input model.AddMxid) (*model.User, error)
+	RemoveMxid(ctx context.Context, input model.RemoveMxid) (*model.User, error)
+	CreateEntry(ctx context.Context, input model.CreateEntry) (*model.Entry, error)
+	CommentEntry(ctx context.Context, input model.CommentEntry) (*model.Entry, error)
+	DeleteEntry(ctx context.Context, input string) (bool, error)
+	CreateList(ctx context.Context, input model.CreateList) (*model.List, error)
+	CommentList(ctx context.Context, input model.CommentList) (*model.List, error)
+	AddToList(ctx context.Context, input model.AddToList) (*model.List, error)
+	DeleteList(ctx context.Context, input string) (bool, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context, first *int, after *string, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error)
@@ -168,6 +193,7 @@ type QueryResolver interface {
 	User(ctx context.Context, id *string, username *string) (*model.User, error)
 	Entry(ctx context.Context, id *string, hashValue *string) (*model.Entry, error)
 	List(ctx context.Context, id *string, name *string) (*model.List, error)
+	Self(ctx context.Context) (*model.User, error)
 }
 
 type executableSchema struct {
@@ -253,13 +279,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Entry.Comments(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
-	case "Entry.fileUrl":
-		if e.complexity.Entry.FileURL == nil {
-			break
-		}
-
-		return e.complexity.Entry.FileURL(childComplexity), true
-
 	case "Entry.hashValue":
 		if e.complexity.Entry.HashValue == nil {
 			break
@@ -340,6 +359,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.List.Comments(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
+	case "List.creator":
+		if e.complexity.List.Creator == nil {
+			break
+		}
+
+		return e.complexity.List.Creator(childComplexity), true
+
 	case "List.entries":
 		if e.complexity.List.Entries == nil {
 			break
@@ -413,6 +439,102 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ListEdge.Node(childComplexity), true
 
+	case "Mutation.addMXID":
+		if e.complexity.Mutation.AddMxid == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addMXID_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddMxid(childComplexity, args["input"].(model.AddMxid)), true
+
+	case "Mutation.addToList":
+		if e.complexity.Mutation.AddToList == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addToList_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddToList(childComplexity, args["input"].(model.AddToList)), true
+
+	case "Mutation.commentEntry":
+		if e.complexity.Mutation.CommentEntry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_commentEntry_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CommentEntry(childComplexity, args["input"].(model.CommentEntry)), true
+
+	case "Mutation.commentList":
+		if e.complexity.Mutation.CommentList == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_commentList_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CommentList(childComplexity, args["input"].(model.CommentList)), true
+
+	case "Mutation.createEntry":
+		if e.complexity.Mutation.CreateEntry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createEntry_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateEntry(childComplexity, args["input"].(model.CreateEntry)), true
+
+	case "Mutation.createList":
+		if e.complexity.Mutation.CreateList == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createList_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateList(childComplexity, args["input"].(model.CreateList)), true
+
+	case "Mutation.deleteEntry":
+		if e.complexity.Mutation.DeleteEntry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteEntry_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteEntry(childComplexity, args["input"].(string)), true
+
+	case "Mutation.deleteList":
+		if e.complexity.Mutation.DeleteList == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteList_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteList(childComplexity, args["input"].(string)), true
+
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
 			break
@@ -424,6 +546,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Login(childComplexity, args["input"].(model.Login)), true
+
+	case "Mutation.register":
+		if e.complexity.Mutation.Register == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_register_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.Register(childComplexity, args["input"].(model.Register)), true
+
+	case "Mutation.removeMXID":
+		if e.complexity.Mutation.RemoveMxid == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeMXID_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveMxid(childComplexity, args["input"].(model.RemoveMxid)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -500,6 +646,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Lists(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*model.ListFilter), args["sort"].(*model.ListSort)), true
+
+	case "Query.self":
+		if e.complexity.Query.Self == nil {
+			break
+		}
+
+		return e.complexity.Query.Self(childComplexity), true
 
 	case "Query.user":
 		if e.complexity.Query.User == nil {
@@ -659,6 +812,15 @@ var sources = []*ast.Source{
 scalar Time
 
 directive @loggedIn on FIELD_DEFINITION
+directive @hasRole(role: UserRole!) on FIELD_DEFINITION
+directive @owner on FIELD_DEFINITION
+directive @maintainer on FIELD_DEFINITION
+
+enum UserRole {
+    ADMIN
+    USER
+    UNAUTHENTICATED
+}
 
 enum SortDirection {
     ASC
@@ -684,7 +846,7 @@ type User {
     admin: Boolean
 
     matrixLinks: [String!]
-    pendingMatrixLinks: [String!]
+    pendingMatrixLinks: [String!] @owner
 }
 
 type UserConnection {
@@ -702,7 +864,6 @@ type Entry {
     tags: [String!]
     partOf(first: Int, after: String): ListConnection
     hashValue: String!
-    fileUrl: String
     timestamp: Time!
     addedBy: User!
     comments(first: Int, after: String): CommentConnection
@@ -722,6 +883,7 @@ type List {
     id: ID!
     name: String!
     tags: [String!]
+    creator: User!
     comments(first: Int, after: String): CommentConnection
     maintainers(first: Int, after: String): UserConnection!
     entries(first: Int, after: String): EntryConnection
@@ -826,7 +988,6 @@ input EntryFilter {
     hashValue: StringFilter
     tags: StringArrayFilter
     addedBy: ID
-    fileUrl: StringFilter
     timestamp: TimestampFilter
     partOf: IDArrayFilter
 }
@@ -852,6 +1013,8 @@ type Query {
     user(id: ID, username: String): User! @loggedIn
     entry(id: ID, hashValue: String): Entry! @loggedIn
     list(id: ID, name: String): List! @loggedIn
+
+    self: User! @loggedIn
 }
 
 input Login {
@@ -859,8 +1022,65 @@ input Login {
     password: String!
 }
 
+input Register {
+    username: String!
+    password: String!
+    mxID: String!
+}
+
+input CreateEntry {
+    tags: [String!]
+    partOf: [ID!]
+    hashValue: String!
+    comment: String
+}
+
+input CommentEntry {
+    entry: ID!
+    comment: String!
+}
+
+input CreateList {
+    name: String!
+    tags: [String!]
+    comment: String
+    maintainers: [ID!]
+    entries: [ID!]
+}
+
+input CommentList {
+    list: ID!
+    comment: String!
+}
+
+input AddToList {
+    list: ID!
+    entries: [ID!]!
+}
+
+input AddMXID {
+    mxid: String!
+}
+
+input RemoveMXID {
+    mxid: String!
+}
+
 type Mutation {
     login(input: Login!): String!
+    register(input: Register!): String! @hasRole(role: UNAUTHENTICATED)
+    addMXID(input: AddMXID!): User! @loggedIn
+    removeMXID(input: RemoveMXID!): User! @loggedIn
+
+    createEntry(input: CreateEntry!): Entry! @loggedIn
+    commentEntry(input: CommentEntry!): Entry! @loggedIn
+    deleteEntry(input: ID!): Boolean! @loggedIn @hasRole(role: ADMIN)
+
+    createList(input: CreateList!): List! @loggedIn
+    commentList(input: CommentList!): List! @loggedIn
+    addToList(input: AddToList!): List! @loggedIn @maintainer
+    deleteList(input: ID!): Boolean! @loggedIn @owner
+
 }
 `, BuiltIn: false},
 }
@@ -869,6 +1089,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) dir_hasRole_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UserRole
+	if tmp, ok := rawArgs["role"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
+		arg0, err = ec.unmarshalNUserRole2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUserRole(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["role"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Entry_comments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -990,6 +1225,126 @@ func (ec *executionContext) field_List_maintainers_args(ctx context.Context, raw
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_addMXID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.AddMxid
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNAddMXID2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐAddMxid(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_addToList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.AddToList
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNAddToList2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐAddToList(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_commentEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CommentEntry
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCommentEntry2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐCommentEntry(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_commentList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CommentList
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCommentList2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐCommentList(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CreateEntry
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateEntry2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐCreateEntry(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CreateList
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateList2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐCreateList(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteEntry_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -997,6 +1352,36 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNLogin2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐLogin(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_register_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.Register
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNRegister2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRegister(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeMXID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.RemoveMxid
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNRemoveMXID2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRemoveMxid(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1642,38 +2027,6 @@ func (ec *executionContext) _Entry_hashValue(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Entry_fileUrl(ctx context.Context, field graphql.CollectedField, obj *model.Entry) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Entry",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.FileURL, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Entry_timestamp(ctx context.Context, field graphql.CollectedField, obj *model.Entry) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2025,6 +2378,41 @@ func (ec *executionContext) _List_tags(ctx context.Context, field graphql.Collec
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _List_creator(ctx context.Context, field graphql.CollectedField, obj *model.List) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "List",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.List().Creator(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _List_comments(ctx context.Context, field graphql.CollectedField, obj *model.List) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2325,6 +2713,652 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_register(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_register_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().Register(rctx, args["input"].(model.Register))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNUserRole2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUserRole(ctx, "UNAUTHENTICATED")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_addMXID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_addMXID_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().AddMxid(rctx, args["input"].(model.AddMxid))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.User`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_removeMXID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_removeMXID_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().RemoveMxid(rctx, args["input"].(model.RemoveMxid))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.User`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createEntry_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreateEntry(rctx, args["input"].(model.CreateEntry))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Entry); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.Entry`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Entry)
+	fc.Result = res
+	return ec.marshalNEntry2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_commentEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_commentEntry_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CommentEntry(rctx, args["input"].(model.CommentEntry))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Entry); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.Entry`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Entry)
+	fc.Result = res
+	return ec.marshalNEntry2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteEntry_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteEntry(rctx, args["input"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNUserRole2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUserRole(ctx, "ADMIN")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, nil, directive1, role)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_createList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createList_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreateList(rctx, args["input"].(model.CreateList))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.List); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.List`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.List)
+	fc.Result = res
+	return ec.marshalNList2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_commentList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_commentList_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CommentList(rctx, args["input"].(model.CommentList))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.List); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.List`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.List)
+	fc.Result = res
+	return ec.marshalNList2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_addToList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_addToList_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().AddToList(rctx, args["input"].(model.AddToList))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Maintainer == nil {
+				return nil, errors.New("directive maintainer is not implemented")
+			}
+			return ec.directives.Maintainer(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.List); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.List`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.List)
+	fc.Result = res
+	return ec.marshalNList2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteList_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteList(rctx, args["input"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Owner == nil {
+				return nil, errors.New("directive owner is not implemented")
+			}
+			return ec.directives.Owner(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
@@ -2839,6 +3873,61 @@ func (ec *executionContext) _Query_list(ctx context.Context, field graphql.Colle
 	return ec.marshalNList2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_self(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Self(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.User); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.User`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3061,8 +4150,28 @@ func (ec *executionContext) _User_pendingMatrixLinks(ctx context.Context, field 
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PendingMatrixLinks, nil
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return obj.PendingMatrixLinks, nil
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Owner == nil {
+				return nil, errors.New("directive owner is not implemented")
+			}
+			return ec.directives.Owner(ctx, obj, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*string`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4338,6 +5447,224 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAddMXID(ctx context.Context, obj interface{}) (model.AddMxid, error) {
+	var it model.AddMxid
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "mxid":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mxid"))
+			it.Mxid, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAddToList(ctx context.Context, obj interface{}) (model.AddToList, error) {
+	var it model.AddToList
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "list":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("list"))
+			it.List, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "entries":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entries"))
+			it.Entries, err = ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCommentEntry(ctx context.Context, obj interface{}) (model.CommentEntry, error) {
+	var it model.CommentEntry
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "entry":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entry"))
+			it.Entry, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "comment":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("comment"))
+			it.Comment, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCommentList(ctx context.Context, obj interface{}) (model.CommentList, error) {
+	var it model.CommentList
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "list":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("list"))
+			it.List, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "comment":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("comment"))
+			it.Comment, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateEntry(ctx context.Context, obj interface{}) (model.CreateEntry, error) {
+	var it model.CreateEntry
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "tags":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
+			it.Tags, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "partOf":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("partOf"))
+			it.PartOf, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "hashValue":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hashValue"))
+			it.HashValue, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "comment":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("comment"))
+			it.Comment, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateList(ctx context.Context, obj interface{}) (model.CreateList, error) {
+	var it model.CreateList
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "tags":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
+			it.Tags, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "comment":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("comment"))
+			it.Comment, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "maintainers":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maintainers"))
+			it.Maintainers, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "entries":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("entries"))
+			it.Entries, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputEntryArrayFilter(ctx context.Context, obj interface{}) (model.EntryArrayFilter, error) {
 	var it model.EntryArrayFilter
 	asMap := map[string]interface{}{}
@@ -4415,14 +5742,6 @@ func (ec *executionContext) unmarshalInputEntryFilter(ctx context.Context, obj i
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addedBy"))
 			it.AddedBy, err = ec.unmarshalOID2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "fileUrl":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fileUrl"))
-			it.FileURL, err = ec.unmarshalOStringFilter2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐStringFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4712,6 +6031,68 @@ func (ec *executionContext) unmarshalInputLogin(ctx context.Context, obj interfa
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
 			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRegister(ctx context.Context, obj interface{}) (model.Register, error) {
+	var it model.Register
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "username":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+			it.Username, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "password":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "mxID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mxID"))
+			it.MxID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRemoveMXID(ctx context.Context, obj interface{}) (model.RemoveMxid, error) {
+	var it model.RemoveMxid
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "mxid":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mxid"))
+			it.Mxid, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5138,8 +6519,6 @@ func (ec *executionContext) _Entry(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "fileUrl":
-			out.Values[i] = ec._Entry_fileUrl(ctx, field, obj)
 		case "timestamp":
 			out.Values[i] = ec._Entry_timestamp(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5268,6 +6647,20 @@ func (ec *executionContext) _List(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "tags":
 			out.Values[i] = ec._List_tags(ctx, field, obj)
+		case "creator":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._List_creator(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "comments":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -5396,6 +6789,56 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "login":
 			out.Values[i] = ec._Mutation_login(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "register":
+			out.Values[i] = ec._Mutation_register(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "addMXID":
+			out.Values[i] = ec._Mutation_addMXID(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "removeMXID":
+			out.Values[i] = ec._Mutation_removeMXID(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createEntry":
+			out.Values[i] = ec._Mutation_createEntry(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "commentEntry":
+			out.Values[i] = ec._Mutation_commentEntry(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteEntry":
+			out.Values[i] = ec._Mutation_deleteEntry(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createList":
+			out.Values[i] = ec._Mutation_createList(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "commentList":
+			out.Values[i] = ec._Mutation_commentList(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "addToList":
+			out.Values[i] = ec._Mutation_addToList(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteList":
+			out.Values[i] = ec._Mutation_deleteList(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -5546,6 +6989,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_list(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "self":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_self(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -5918,6 +7375,16 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) unmarshalNAddMXID2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐAddMxid(ctx context.Context, v interface{}) (model.AddMxid, error) {
+	res, err := ec.unmarshalInputAddMXID(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNAddToList2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐAddToList(ctx context.Context, v interface{}) (model.AddToList, error) {
+	res, err := ec.unmarshalInputAddToList(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5995,6 +7462,26 @@ func (ec *executionContext) marshalNCommentEdge2ᚖgithubᚗcomᚋUnkn0wnCatᚋm
 		return graphql.Null
 	}
 	return ec._CommentEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNCommentEntry2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐCommentEntry(ctx context.Context, v interface{}) (model.CommentEntry, error) {
+	res, err := ec.unmarshalInputCommentEntry(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCommentList2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐCommentList(ctx context.Context, v interface{}) (model.CommentList, error) {
+	res, err := ec.unmarshalInputCommentList(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateEntry2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐCreateEntry(ctx context.Context, v interface{}) (model.CreateEntry, error) {
+	res, err := ec.unmarshalInputCreateEntry(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateList2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐCreateList(ctx context.Context, v interface{}) (model.CreateList, error) {
+	res, err := ec.unmarshalInputCreateList(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNEntry2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntry(ctx context.Context, sel ast.SelectionSet, v model.Entry) graphql.Marshaler {
@@ -6094,6 +7581,42 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) unmarshalNID2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNList2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐList(ctx context.Context, sel ast.SelectionSet, v model.List) graphql.Marshaler {
 	return ec._List(ctx, sel, &v)
 }
@@ -6189,6 +7712,16 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatr
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRegister2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRegister(ctx context.Context, v interface{}) (model.Register, error) {
+	res, err := ec.unmarshalInputRegister(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNRemoveMXID2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRemoveMxid(ctx context.Context, v interface{}) (model.RemoveMxid, error) {
+	res, err := ec.unmarshalInputRemoveMXID(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNSortDirection2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐSortDirection(ctx context.Context, v interface{}) (model.SortDirection, error) {
@@ -6332,6 +7865,16 @@ func (ec *executionContext) marshalNUserEdge2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatr
 		return graphql.Null
 	}
 	return ec._UserEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUserRole2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUserRole(ctx context.Context, v interface{}) (model.UserRole, error) {
+	var res model.UserRole
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUserRole2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUserRole(ctx context.Context, sel ast.SelectionSet, v model.UserRole) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -6667,6 +8210,48 @@ func (ec *executionContext) unmarshalOEntrySort2ᚖgithubᚗcomᚋUnkn0wnCatᚋm
 	}
 	res, err := ec.unmarshalInputEntrySort(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOID2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNID2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOID2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNID2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOID2ᚕᚖstring(ctx context.Context, v interface{}) ([]*string, error) {

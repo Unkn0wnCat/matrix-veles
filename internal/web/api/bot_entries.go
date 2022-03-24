@@ -86,7 +86,7 @@ func apiHandleBotEntriesPost(res http.ResponseWriter, req *http.Request) {
 		Tags:      body.Tags,
 		PartOf:    body.PartOf,
 		HashValue: body.Hash,
-		FileURL:   body.FileURL,
+		//FileURL:   body.FileURL,
 		Timestamp: time.Now(),
 		AddedBy:   &userId,
 		Comments:  nil,

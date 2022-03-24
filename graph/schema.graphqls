@@ -5,6 +5,15 @@
 scalar Time
 
 directive @loggedIn on FIELD_DEFINITION
+directive @hasRole(role: UserRole!) on FIELD_DEFINITION
+directive @owner on FIELD_DEFINITION
+directive @maintainer on FIELD_DEFINITION
+
+enum UserRole {
+    ADMIN
+    USER
+    UNAUTHENTICATED
+}
 
 enum SortDirection {
     ASC
@@ -48,7 +57,6 @@ type Entry {
     tags: [String!]
     partOf(first: Int, after: String): ListConnection
     hashValue: String!
-    fileUrl: String
     timestamp: Time!
     addedBy: User!
     comments(first: Int, after: String): CommentConnection
@@ -68,6 +76,7 @@ type List {
     id: ID!
     name: String!
     tags: [String!]
+    creator: User!
     comments(first: Int, after: String): CommentConnection
     maintainers(first: Int, after: String): UserConnection!
     entries(first: Int, after: String): EntryConnection
@@ -172,7 +181,6 @@ input EntryFilter {
     hashValue: StringFilter
     tags: StringArrayFilter
     addedBy: ID
-    fileUrl: StringFilter
     timestamp: TimestampFilter
     partOf: IDArrayFilter
 }
@@ -198,6 +206,8 @@ type Query {
     user(id: ID, username: String): User! @loggedIn
     entry(id: ID, hashValue: String): Entry! @loggedIn
     list(id: ID, name: String): List! @loggedIn
+
+    self: User! @loggedIn
 }
 
 input Login {
@@ -205,6 +215,63 @@ input Login {
     password: String!
 }
 
+input Register {
+    username: String!
+    password: String!
+    mxID: String!
+}
+
+input CreateEntry {
+    tags: [String!]
+    partOf: [ID!]
+    hashValue: String!
+    comment: String
+}
+
+input CommentEntry {
+    entry: ID!
+    comment: String!
+}
+
+input CreateList {
+    name: String!
+    tags: [String!]
+    comment: String
+    maintainers: [ID!]
+    entries: [ID!]
+}
+
+input CommentList {
+    list: ID!
+    comment: String!
+}
+
+input AddToList {
+    list: ID!
+    entries: [ID!]!
+}
+
+input AddMXID {
+    mxid: String!
+}
+
+input RemoveMXID {
+    mxid: String!
+}
+
 type Mutation {
     login(input: Login!): String!
+    register(input: Register!): String! @hasRole(role: UNAUTHENTICATED)
+    addMXID(input: AddMXID!): User! @loggedIn
+    removeMXID(input: RemoveMXID!): User! @loggedIn
+
+    createEntry(input: CreateEntry!): Entry! @loggedIn
+    commentEntry(input: CommentEntry!): Entry! @loggedIn
+    deleteEntry(input: ID!): Boolean! @loggedIn @hasRole(role: ADMIN)
+
+    createList(input: CreateList!): List! @loggedIn
+    commentList(input: CommentList!): List! @loggedIn
+    addToList(input: AddToList!): List! @loggedIn @maintainer
+    deleteList(input: ID!): Boolean! @loggedIn @owner
+
 }

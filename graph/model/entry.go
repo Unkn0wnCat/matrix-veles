@@ -19,11 +19,11 @@ type Entry struct {
 
 func MakeEntry(dbEntry *model.DBEntry) *Entry {
 	return &Entry{
-		ID:          dbEntry.ID.Hex(),
-		Tags:        dbEntry.Tags,
-		PartOfIDs:   dbEntry.PartOf,
-		HashValue:   dbEntry.HashValue,
-		FileURL:     &dbEntry.FileURL,
+		ID:        dbEntry.ID.Hex(),
+		Tags:      dbEntry.Tags,
+		PartOfIDs: dbEntry.PartOf,
+		HashValue: dbEntry.HashValue,
+		//FileURL:     &dbEntry.FileURL,
 		Timestamp:   dbEntry.Timestamp,
 		AddedByID:   *dbEntry.AddedBy,
 		RawComments: dbEntry.Comments,

@@ -9,6 +9,15 @@ import (
 	"time"
 )
 
+type AddMxid struct {
+	Mxid string `json:"mxid"`
+}
+
+type AddToList struct {
+	List    string   `json:"list"`
+	Entries []string `json:"entries"`
+}
+
 type CommentConnection struct {
 	PageInfo *PageInfo      `json:"pageInfo"`
 	Edges    []*CommentEdge `json:"edges"`
@@ -17,6 +26,31 @@ type CommentConnection struct {
 type CommentEdge struct {
 	Node   *Comment `json:"node"`
 	Cursor string   `json:"cursor"`
+}
+
+type CommentEntry struct {
+	Entry   string `json:"entry"`
+	Comment string `json:"comment"`
+}
+
+type CommentList struct {
+	List    string `json:"list"`
+	Comment string `json:"comment"`
+}
+
+type CreateEntry struct {
+	Tags      []string `json:"tags"`
+	PartOf    []string `json:"partOf"`
+	HashValue string   `json:"hashValue"`
+	Comment   *string  `json:"comment"`
+}
+
+type CreateList struct {
+	Name        string   `json:"name"`
+	Tags        []string `json:"tags"`
+	Comment     *string  `json:"comment"`
+	Maintainers []string `json:"maintainers"`
+	Entries     []string `json:"entries"`
 }
 
 type EntryArrayFilter struct {
@@ -40,7 +74,6 @@ type EntryFilter struct {
 	HashValue *StringFilter      `json:"hashValue"`
 	Tags      *StringArrayFilter `json:"tags"`
 	AddedBy   *string            `json:"addedBy"`
-	FileURL   *StringFilter      `json:"fileUrl"`
 	Timestamp *TimestampFilter   `json:"timestamp"`
 	PartOf    *IDArrayFilter     `json:"partOf"`
 }
@@ -102,6 +135,16 @@ type PageInfo struct {
 	HasNextPage     bool   `json:"hasNextPage"`
 	StartCursor     string `json:"startCursor"`
 	EndCursor       string `json:"endCursor"`
+}
+
+type Register struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	MxID     string `json:"mxID"`
+}
+
+type RemoveMxid struct {
+	Mxid string `json:"mxid"`
 }
 
 type SortRule struct {
@@ -193,5 +236,48 @@ func (e *SortDirection) UnmarshalGQL(v interface{}) error {
 }
 
 func (e SortDirection) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type UserRole string
+
+const (
+	UserRoleAdmin           UserRole = "ADMIN"
+	UserRoleUser            UserRole = "USER"
+	UserRoleUnauthenticated UserRole = "UNAUTHENTICATED"
+)
+
+var AllUserRole = []UserRole{
+	UserRoleAdmin,
+	UserRoleUser,
+	UserRoleUnauthenticated,
+}
+
+func (e UserRole) IsValid() bool {
+	switch e {
+	case UserRoleAdmin, UserRoleUser, UserRoleUnauthenticated:
+		return true
+	}
+	return false
+}
+
+func (e UserRole) String() string {
+	return string(e)
+}
+
+func (e *UserRole) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = UserRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid UserRole", str)
+	}
+	return nil
+}
+
+func (e UserRole) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -1,13 +1,64 @@
 package graph
 
 import (
+	"context"
+	"errors"
 	"github.com/Unkn0wnCat/matrix-veles/graph/model"
+	"github.com/Unkn0wnCat/matrix-veles/internal/db"
 	model2 "github.com/Unkn0wnCat/matrix-veles/internal/db/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"time"
 )
+
+func GetUserFromContext(ctx context.Context) (*model2.DBUser, error) {
+	userID, err := GetUserIDFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := db.GetUserByID(*userID)
+	if err != nil {
+		return nil, errors.New("invalid session")
+	}
+
+	return user, nil
+}
+
+func GetUserIDFromContext(ctx context.Context) (*primitive.ObjectID, error) {
+	claimsVal := ctx.Value("claims")
+	var claims model2.JwtClaims
+	if claimsVal != nil {
+		claims = claimsVal.(model2.JwtClaims)
+		if claims.Valid() == nil {
+			sub := claims.Subject
+
+			id, err := primitive.ObjectIDFromHex(sub)
+			if err != nil {
+				return nil, err
+			}
+
+			return &id, nil
+		}
+	}
+
+	return nil, errors.New("no user")
+}
+
+func CheckOwnerConstraint(ctx context.Context, realOwnerIDHex string) error {
+	constraint, ok := ctx.Value("ownerConstraint").(string)
+
+	if !ok {
+		return nil // This means no ownerConstraint is set
+	}
+
+	if constraint != realOwnerIDHex {
+		return errors.New("owner constraint violation")
+	}
+
+	return nil
+}
 
 func buildStringFilter(filter *model.StringFilter) bson.M {
 	compiledFilter := bson.M{}
@@ -354,9 +405,9 @@ func buildDBEntryFilter(first *int, after *string, filter *model.EntryFilter, so
 			}
 		}
 
-		if filter.FileURL != nil {
+		/*if filter.FileURL != nil {
 			filterBsonW["file_url"] = buildStringFilter(filter.FileURL)
-		}
+		}*/
 
 		if filter.PartOf != nil {
 			filterBsonW["part_of"], err = buildIDArrayFilter(filter.PartOf)
