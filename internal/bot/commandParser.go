@@ -19,7 +19,9 @@ package bot
 
 import (
 	"context"
+	"github.com/Unkn0wnCat/matrix-veles/internal/db"
 	"github.com/Unkn0wnCat/matrix-veles/internal/tracer"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.opentelemetry.io/otel/attribute"
 	"log"
 	"maunium.net/go/mautrix"
@@ -61,9 +63,44 @@ func handleCommand(command string, sender id.UserID, id id.RoomID, client *mautr
 		return
 	}
 
+	if strings.HasPrefix(command, "link ") {
+		commandLink(sender, id, client, strings.TrimPrefix(command, "link "))
+		return
+	}
+
 	// No match :( - display help
 	commandHelp(sender, id, client)
 	return
+}
+
+func commandLink(userId id.UserID, id id.RoomID, client *mautrix.Client, linkId string) {
+	linkId = strings.Trim(linkId, " \n\r")
+
+	linkIdP, err := primitive.ObjectIDFromHex(linkId)
+	if err != nil {
+		_, _ = client.SendNotice(id, "Invalid Link ID")
+		return
+	}
+
+	user, err := db.GetUserByID(linkIdP)
+	if err != nil {
+		_, _ = client.SendNotice(id, "Invalid Link ID")
+		return
+	}
+
+	err = user.ValidateMXID(userId.String())
+	if err != nil {
+		_, _ = client.SendNotice(id, "No matching link request pending")
+		return
+	}
+
+	err = db.SaveUser(user)
+	if err != nil {
+		_, _ = client.SendNotice(id, "Database error")
+		return
+	}
+
+	_, _ = client.SendNotice(id, "Successfully linked")
 }
 
 func commandHelp(_ id.UserID, id id.RoomID, client *mautrix.Client) {

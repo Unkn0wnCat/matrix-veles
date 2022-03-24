@@ -2,8 +2,10 @@ package model
 
 import (
 	"encoding/base64"
+	"errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
+	"strings"
 )
 
 type DBUser struct {
@@ -18,6 +20,20 @@ type DBUser struct {
 	PendingMatrixLinks []*string `bson:"pending_matrix_links" json:"pending_matrix_links"` // PendingMatrixLinks is the matrix-users pending verification
 
 	Password *string `bson:"-" json:"-"` // Password may never be sent out!
+}
+
+func (usr *DBUser) ValidateMXID(mxid string) error {
+	for i, pendingMxid := range usr.PendingMatrixLinks {
+		if strings.EqualFold(*pendingMxid, mxid) {
+			usr.PendingMatrixLinks = append(usr.PendingMatrixLinks[:i], usr.PendingMatrixLinks[i+1:]...)
+
+			usr.MatrixLinks = append(usr.MatrixLinks, &mxid)
+
+			return nil
+		}
+	}
+
+	return errors.New("not pending")
 }
 
 func (usr *DBUser) HashPassword() error {
