@@ -528,7 +528,7 @@ func ResolveComments(comments []*model2.DBComment, first *int, after *string) (*
 	}, nil
 }
 
-func buildDBRoomFilter(first *int, after *string, filter *model.RoomFilter /*, sort *model.UserSort*/, userId primitive.ObjectID) (*bson.M, *bson.M, *int64, error) {
+func buildDBRoomFilter(first *int, after *string, filter *model.RoomFilter /*, sort *model.UserSort*/, userMxids []string) (*bson.M, *bson.M, *int64, error) {
 	compiledFilter := bson.M{}
 	compiledSort := bson.M{}
 
@@ -581,7 +581,9 @@ func buildDBRoomFilter(first *int, after *string, filter *model.RoomFilter /*, s
 		}
 
 		if filter.CanEdit != nil && *filter.CanEdit == true {
-			filterBsonW["admins"] = userId
+			filterBsonW["admins"] = bson.M{
+				"$in": userMxids,
+			}
 		}
 
 		filterBson = &filterBsonW

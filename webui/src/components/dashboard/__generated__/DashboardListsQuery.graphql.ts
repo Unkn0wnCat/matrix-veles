@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3a1cacd9d1f9fc8ae498211b0141af63>>
+ * @generated SignedSource<<c756e72cff23f484ecd35ba7ddaa2c80>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,68 +10,32 @@
 
 import { ConcreteRequest, Query } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type DashboardQuery$variables = {
-  first?: string | null;
+export type DashboardListsQuery$variables = {
   count?: number | null;
+  first?: string | null;
 };
-export type DashboardQuery$data = {
-  readonly self: {
-    readonly username: string;
-    readonly id: string;
-    readonly admin: boolean | null;
-  } | null;
+export type DashboardListsQuery$data = {
   readonly " $fragmentSpreads": FragmentRefs<"DashboardQueryLists">;
 };
-export type DashboardQuery = {
-  variables: DashboardQuery$variables;
-  response: DashboardQuery$data;
+export type DashboardListsQuery = {
+  variables: DashboardListsQuery$variables;
+  response: DashboardListsQuery$data;
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "count"
-},
-v1 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "first"
-},
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-},
-v3 = {
-  "alias": null,
-  "args": null,
-  "concreteType": "User",
-  "kind": "LinkedField",
-  "name": "self",
-  "plural": false,
-  "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "username",
-      "storageKey": null
-    },
-    (v2/*: any*/),
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "admin",
-      "storageKey": null
-    }
-  ],
-  "storageKey": null
-},
-v4 = [
+var v0 = [
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "count"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "first"
+  }
+],
+v1 = [
   {
     "kind": "Variable",
     "name": "after",
@@ -92,15 +56,11 @@ v4 = [
 ];
 return {
   "fragment": {
-    "argumentDefinitions": [
-      (v0/*: any*/),
-      (v1/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "DashboardQuery",
+    "name": "DashboardListsQuery",
     "selections": [
-      (v3/*: any*/),
       {
         "args": null,
         "kind": "FragmentSpread",
@@ -112,17 +72,13 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": [
-      (v1/*: any*/),
-      (v0/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "DashboardQuery",
+    "name": "DashboardListsQuery",
     "selections": [
-      (v3/*: any*/),
       {
         "alias": null,
-        "args": (v4/*: any*/),
+        "args": (v1/*: any*/),
         "concreteType": "RoomConnection",
         "kind": "LinkedField",
         "name": "rooms",
@@ -144,7 +100,13 @@ return {
                 "name": "node",
                 "plural": false,
                 "selections": [
-                  (v2/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "id",
+                    "storageKey": null
+                  },
                   {
                     "alias": null,
                     "args": null,
@@ -234,7 +196,7 @@ return {
       },
       {
         "alias": null,
-        "args": (v4/*: any*/),
+        "args": (v1/*: any*/),
         "filters": [
           "filter"
         ],
@@ -246,16 +208,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f41a91749c22f4e9026e9ae1d21e72a9",
+    "cacheID": "b6da4b1264fa9efe9070df587fc5396a",
     "id": null,
     "metadata": {},
-    "name": "DashboardQuery",
+    "name": "DashboardListsQuery",
     "operationKind": "query",
-    "text": "query DashboardQuery(\n  $first: String\n  $count: Int\n) {\n  self {\n    username\n    id\n    admin\n  }\n  ...DashboardQueryLists\n}\n\nfragment DashboardQueryLists on Query {\n  rooms(after: $first, first: $count, filter: {canEdit: true}) {\n    edges {\n      node {\n        id\n        active\n        debug\n        hashCheckerConfig {\n          chatNotice\n          hashCheckMode\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query DashboardListsQuery(\n  $count: Int\n  $first: String\n) {\n  ...DashboardQueryLists\n}\n\nfragment DashboardQueryLists on Query {\n  rooms(after: $first, first: $count, filter: {canEdit: true}) {\n    edges {\n      node {\n        id\n        active\n        debug\n        hashCheckerConfig {\n          chatNotice\n          hashCheckMode\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "dc06e10a331a27f1a5904147ae650a71";
+(node as any).hash = "56aca4bdff70334e5602099f0fe53156";
 
 export default node;

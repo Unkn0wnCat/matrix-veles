@@ -164,9 +164,8 @@ type RoomConfigUpdate struct {
 }
 
 type RoomConnection struct {
-	PageInfo        *PageInfo   `json:"pageInfo"`
-	Edges           []*RoomEdge `json:"edges"`
-	SubscribedLists []string    `json:"subscribedLists"`
+	PageInfo *PageInfo   `json:"pageInfo"`
+	Edges    []*RoomEdge `json:"edges"`
 }
 
 type RoomEdge struct {

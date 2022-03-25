@@ -906,13 +906,17 @@ func (r *queryResolver) Entries(ctx context.Context, first *int, after *string, 
 }
 
 func (r *queryResolver) Rooms(ctx context.Context, first *int, after *string, filter *model.RoomFilter) (*model.RoomConnection, error) {
-	userId, _ := GetUserIDFromContext(ctx)
+	user, _ := GetUserFromContext(ctx)
 
-	if userId == nil {
-		userId = &primitive.ObjectID{}
+	var userMxids []string
+
+	if user != nil {
+		for _, mxid := range user.MatrixLinks {
+			userMxids = append(userMxids, *mxid)
+		}
 	}
 
-	dbFilter, dbSort, dbLimit, err := buildDBRoomFilter(first, after, filter, *userId)
+	dbFilter, dbSort, dbLimit, err := buildDBRoomFilter(first, after, filter, userMxids)
 	if err != nil {
 		return nil, err
 	}

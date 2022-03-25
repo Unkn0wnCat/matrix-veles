@@ -88,8 +88,9 @@ type ComplexityRoot struct {
 	}
 
 	HashCheckerConfig struct {
-		ChatNotice    func(childComplexity int) int
-		HashCheckMode func(childComplexity int) int
+		ChatNotice      func(childComplexity int) int
+		HashCheckMode   func(childComplexity int) int
+		SubscribedLists func(childComplexity int) int
 	}
 
 	List struct {
@@ -155,9 +156,8 @@ type ComplexityRoot struct {
 	}
 
 	RoomConnection struct {
-		Edges           func(childComplexity int) int
-		PageInfo        func(childComplexity int) int
-		SubscribedLists func(childComplexity int) int
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
 	}
 
 	RoomEdge struct {
@@ -388,6 +388,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.HashCheckerConfig.HashCheckMode(childComplexity), true
+
+	case "HashCheckerConfig.subscribedLists":
+		if e.complexity.HashCheckerConfig.SubscribedLists == nil {
+			break
+		}
+
+		return e.complexity.HashCheckerConfig.SubscribedLists(childComplexity), true
 
 	case "List.comments":
 		if e.complexity.List.Comments == nil {
@@ -800,13 +807,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RoomConnection.PageInfo(childComplexity), true
 
-	case "RoomConnection.subscribedLists":
-		if e.complexity.RoomConnection.SubscribedLists == nil {
-			break
-		}
-
-		return e.complexity.RoomConnection.SubscribedLists(childComplexity), true
-
 	case "RoomEdge.cursor":
 		if e.complexity.RoomEdge.Cursor == nil {
 			break
@@ -990,6 +990,7 @@ enum HashCheckerMode {
 type HashCheckerConfig {
     chatNotice: Boolean!
     hashCheckMode: HashCheckerMode!
+    subscribedLists: [ID!]
 }
 
 type Room {
@@ -1004,7 +1005,6 @@ type Room {
 type RoomConnection {
     pageInfo: PageInfo!
     edges: [RoomEdge!]!
-    subscribedLists: [ID!]
 }
 
 type RoomEdge {
@@ -2593,6 +2593,38 @@ func (ec *executionContext) _HashCheckerConfig_hashCheckMode(ctx context.Context
 	res := resTmp.(model.HashCheckerMode)
 	fc.Result = res
 	return ec.marshalNHashCheckerMode2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐHashCheckerMode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _HashCheckerConfig_subscribedLists(ctx context.Context, field graphql.CollectedField, obj *model.HashCheckerConfig) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "HashCheckerConfig",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SubscribedLists, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOID2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _List_id(ctx context.Context, field graphql.CollectedField, obj *model.List) (ret graphql.Marshaler) {
@@ -4680,38 +4712,6 @@ func (ec *executionContext) _RoomConnection_edges(ctx context.Context, field gra
 	res := resTmp.([]*model.RoomEdge)
 	fc.Result = res
 	return ec.marshalNRoomEdge2ᚕᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoomEdgeᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _RoomConnection_subscribedLists(ctx context.Context, field graphql.CollectedField, obj *model.RoomConnection) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "RoomConnection",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SubscribedLists, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalOID2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _RoomEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.RoomEdge) (ret graphql.Marshaler) {
@@ -7558,6 +7558,8 @@ func (ec *executionContext) _HashCheckerConfig(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "subscribedLists":
+			out.Values[i] = ec._HashCheckerConfig_subscribedLists(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8036,8 +8038,6 @@ func (ec *executionContext) _RoomConnection(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "subscribedLists":
-			out.Values[i] = ec._RoomConnection_subscribedLists(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

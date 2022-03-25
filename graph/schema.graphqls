@@ -40,6 +40,7 @@ enum HashCheckerMode {
 type HashCheckerConfig {
     chatNotice: Boolean!
     hashCheckMode: HashCheckerMode!
+    subscribedLists: [ID!]
 }
 
 type Room {
@@ -54,7 +55,6 @@ type Room {
 type RoomConnection {
     pageInfo: PageInfo!
     edges: [RoomEdge!]!
-    subscribedLists: [ID!]
 }
 
 type RoomEdge {
