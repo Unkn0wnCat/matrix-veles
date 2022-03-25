@@ -50,7 +50,7 @@ func SetupAPI() chi.Router {
 			}
 		}
 
-		return nil, errors.New("authorization required")
+		return nil, nil
 	}
 
 	c.Directives.HasRole = func(ctx context.Context, obj interface{}, next graphql.Resolver, role model2.UserRole) (res interface{}, err error) {
@@ -59,7 +59,7 @@ func SetupAPI() chi.Router {
 			if role == model2.UserRoleUnauthenticated {
 				return next(ctx)
 			}
-			return nil, errors.New("authorization required")
+			return nil, nil
 		}
 
 		switch role {
@@ -75,13 +75,13 @@ func SetupAPI() chi.Router {
 			return nil, errors.New("server error")
 		}
 
-		return nil, errors.New("unauthorized")
+		return nil, nil
 	}
 
 	c.Directives.Owner = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 		user, err := graph.GetUserFromContext(ctx)
 		if err != nil {
-			return nil, errors.New("authorization required")
+			return nil, nil
 		}
 
 		ctx2 := context.WithValue(ctx, "ownerConstraint", user.ID.Hex())

@@ -62,7 +62,7 @@
     border-bottom: thin solid var(--veles-color-border);
     height: 66px;
 
-    a {
+    a, button {
       @include panelTopBarLink;
     }
 
@@ -80,6 +80,10 @@
     display: flex;
     align-items: stretch;
     flex-grow: 1;
+
+    >* {
+      flex-shrink: 0;
+    }
 
     > nav {
       display: flex;
@@ -137,7 +141,10 @@
     }
 
     > main {
-      padding: var(--veles-layout-padding)
+      padding: var(--veles-layout-padding);
+      height: calc(100vh - 66px);
+      overflow: auto;
+      flex-grow: 1;
     }
   }
 }

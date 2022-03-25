@@ -4,8 +4,6 @@ import styles from "./AuthViews.module.scss";
 
 import {ReactComponent as Logo} from "../../logo.svg";
 import {Link, useLocation} from "react-router-dom";
-import {axiosDefault} from "../../context/axios";
-import {AxiosError} from "axios";
 import {useAppDispatch} from "../../app/hooks";
 import {logIn} from "../../features/auth/authSlice";
 
@@ -13,6 +11,7 @@ import {Key} from "lucide-react";
 import {AuthLocationState} from "../../layouts/AuthLayout";
 import {Helmet} from "react-helmet";
 import {Trans, useTranslation} from "react-i18next";
+import LoginMutation from "../../mutations/LoginMutation";
 
 const LoginView = () => {
     const [username, setUsername] = useState("");
@@ -34,6 +33,18 @@ const LoginView = () => {
         setError("")
 
         try {
+            const res = await LoginMutation(username, password)
+
+            const jwt = res.login;
+
+            dispatch(logIn(jwt))
+        } catch (e: any) {
+            setError("An error occurred: "+e.source?.errors[0]?.message)
+        } finally {
+            setLoading(false)
+        }
+
+        /*try {
             const res = await axiosDefault.post("/auth/login", {
                 username,
                 password
@@ -52,7 +63,7 @@ const LoginView = () => {
             }
         } finally {
             setLoading(false)
-        }
+        }*/
     }
 
     return <>

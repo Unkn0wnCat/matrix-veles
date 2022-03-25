@@ -1,3 +1,5 @@
 {
-  "test": "Tst2"
+  "dashboard": {
+    "helloText": "Ayo {{name}}!"
+  }
 }

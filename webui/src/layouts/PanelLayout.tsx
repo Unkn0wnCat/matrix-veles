@@ -1,16 +1,20 @@
 import React, {useState} from "react";
 
 import {Link, NavLink, useOutlet} from "react-router-dom";
-import {Home, List, ClipboardList, ExternalLink, ChevronRight, MessageSquare} from "lucide-react";
+import {Home, List, ClipboardList, ExternalLink, ChevronRight, MessageSquare, LogOut} from "lucide-react";
 
 import {ReactComponent as Logo} from "../logo.svg";
 
 import styles from "./PanelLayout.module.scss";
 import {Trans} from "react-i18next";
+import {useAppDispatch} from "../app/hooks";
+import {logOut} from "../features/auth/authSlice";
 
 const PanelLayout = () => {
     const outlet = useOutlet();
     const [hashingExpanded, setHashingExpanded] = useState(false)
+
+    const dispatch = useAppDispatch()
 
     return <div className={styles.panel}>
         <a href={"#main"} className={styles.skipToContent}><Trans i18nKey={"panel:jump_to_content"}>Jump to Content</Trans></a>
@@ -18,6 +22,7 @@ const PanelLayout = () => {
         <div className={styles.topBar}>
             <Link to={"/"} className={styles.logo}><Logo/> <span>Matrix-Veles</span></Link>
             <a href={"https://veles.1in1.net/docs/intro"} target={"_blank"} rel={"noreferrer"}><ExternalLink/> <span><Trans i18nKey={"panel:documentation"}>Documentation</Trans></span></a>
+            <button onClick={() => {dispatch(logOut())}}><LogOut/> Logout</button>
         </div>
         <div className={styles.content}>
             <nav id={"navigation"}>
@@ -32,7 +37,9 @@ const PanelLayout = () => {
                 </div>
             </nav>
             <main id={"main"}>
-                {outlet}
+                <React.Suspense fallback={<span>Fetching data...</span>}>
+                    {outlet}
+                </React.Suspense>
             </main>
         </div>
     </div>

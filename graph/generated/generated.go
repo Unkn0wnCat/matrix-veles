@@ -1006,15 +1006,15 @@ input EntrySort {
 }
 
 type Query {
-    users(first: Int, after: String, filter: UserFilter, sort: UserSort): UserConnection! @loggedIn
-    lists(first: Int, after: String, filter: ListFilter, sort: ListSort): ListConnection! @loggedIn
-    entries(first: Int, after: String, filter: EntryFilter, sort: EntrySort): EntryConnection! @loggedIn
+    users(first: Int, after: String, filter: UserFilter, sort: UserSort): UserConnection @loggedIn
+    lists(first: Int, after: String, filter: ListFilter, sort: ListSort): ListConnection @loggedIn
+    entries(first: Int, after: String, filter: EntryFilter, sort: EntrySort): EntryConnection @loggedIn
 
-    user(id: ID, username: String): User! @loggedIn
-    entry(id: ID, hashValue: String): Entry! @loggedIn
-    list(id: ID, name: String): List! @loggedIn
+    user(id: ID, username: String): User @loggedIn
+    entry(id: ID, hashValue: String): Entry @loggedIn
+    list(id: ID, name: String): List @loggedIn
 
-    self: User! @loggedIn
+    self: User @loggedIn
 }
 
 input Login {
@@ -3542,14 +3542,11 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.UserConnection)
 	fc.Result = res
-	return ec.marshalNUserConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUserConnection(ctx, field.Selections, res)
+	return ec.marshalOUserConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUserConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_lists(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3604,14 +3601,11 @@ func (ec *executionContext) _Query_lists(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.ListConnection)
 	fc.Result = res
-	return ec.marshalNListConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx, field.Selections, res)
+	return ec.marshalOListConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_entries(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3666,14 +3660,11 @@ func (ec *executionContext) _Query_entries(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.EntryConnection)
 	fc.Result = res
-	return ec.marshalNEntryConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntryConnection(ctx, field.Selections, res)
+	return ec.marshalOEntryConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntryConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3728,14 +3719,11 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_entry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3790,14 +3778,11 @@ func (ec *executionContext) _Query_entry(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Entry)
 	fc.Result = res
-	return ec.marshalNEntry2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntry(ctx, field.Selections, res)
+	return ec.marshalOEntry2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntry(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_list(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3852,14 +3837,11 @@ func (ec *executionContext) _Query_list(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.List)
 	fc.Result = res
-	return ec.marshalNList2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
+	return ec.marshalOList2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_self(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3907,14 +3889,11 @@ func (ec *executionContext) _Query_self(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6919,9 +6898,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_users(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "lists":
@@ -6933,9 +6909,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_lists(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "entries":
@@ -6947,9 +6920,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_entries(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "user":
@@ -6961,9 +6931,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_user(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "entry":
@@ -6975,9 +6942,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_entry(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "list":
@@ -6989,9 +6953,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_list(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "self":
@@ -7003,9 +6964,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_self(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "__type":
@@ -7498,20 +7456,6 @@ func (ec *executionContext) marshalNEntry2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrix�
 	return ec._Entry(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNEntryConnection2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntryConnection(ctx context.Context, sel ast.SelectionSet, v model.EntryConnection) graphql.Marshaler {
-	return ec._EntryConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNEntryConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntryConnection(ctx context.Context, sel ast.SelectionSet, v *model.EntryConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._EntryConnection(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNEntryEdge2ᚕᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntryEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.EntryEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -7629,20 +7573,6 @@ func (ec *executionContext) marshalNList2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrix�
 		return graphql.Null
 	}
 	return ec._List(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNListConnection2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx context.Context, sel ast.SelectionSet, v model.ListConnection) graphql.Marshaler {
-	return ec._ListConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNListConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx context.Context, sel ast.SelectionSet, v *model.ListConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._ListConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNListEdge2ᚕᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ListEdge) graphql.Marshaler {
@@ -8170,6 +8100,13 @@ func (ec *executionContext) marshalOCommentConnection2ᚖgithubᚗcomᚋUnkn0wnC
 	return ec._CommentConnection(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOEntry2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntry(ctx context.Context, sel ast.SelectionSet, v *model.Entry) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Entry(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOEntryConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntryConnection(ctx context.Context, sel ast.SelectionSet, v *model.EntryConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -8331,6 +8268,13 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 	return graphql.MarshalInt(*v)
+}
+
+func (ec *executionContext) marshalOList2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐList(ctx context.Context, sel ast.SelectionSet, v *model.List) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._List(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOListConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx context.Context, sel ast.SelectionSet, v *model.ListConnection) graphql.Marshaler {
@@ -8560,6 +8504,20 @@ func (ec *executionContext) unmarshalOTimestampFilter2ᚖgithubᚗcomᚋUnkn0wnC
 	}
 	res, err := ec.unmarshalInputTimestampFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._User(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUserConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUserConnection(ctx context.Context, sel ast.SelectionSet, v *model.UserConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._UserConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOUserFilter2ᚕᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUserFilter(ctx context.Context, v interface{}) ([]*model.UserFilter, error) {

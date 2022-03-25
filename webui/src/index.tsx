@@ -6,17 +6,24 @@ import {store} from './app/store';
 import {Provider} from 'react-redux';
 import * as serviceWorker from './serviceWorker';
 import { BrowserRouter } from "react-router-dom";
+import {
+    RelayEnvironmentProvider,
+} from 'react-relay/hooks';
 
 import "./i18n";
+import RelayEnvironment from "./RelayEnvironment";
+
 
 ReactDOM.render(
     <React.StrictMode>
         <Provider store={store}>
-            <React.Suspense fallback={<h1>Loading...</h1>}>
-                <BrowserRouter>
-                    <App/>
-                </BrowserRouter>
-            </React.Suspense>
+            <RelayEnvironmentProvider environment={RelayEnvironment({store})}>
+                <React.Suspense fallback={<h1>Loading...</h1>}>
+                    <BrowserRouter>
+                        <App />
+                    </BrowserRouter>
+                </React.Suspense>
+            </RelayEnvironmentProvider>
         </Provider>
     </React.StrictMode>,
     document.getElementById('root')
