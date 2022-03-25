@@ -85,6 +85,11 @@ type EntrySort struct {
 	AddedBy   *SortRule `json:"addedBy"`
 }
 
+type HashCheckerConfigUpdate struct {
+	ChatNotice    *bool            `json:"chatNotice"`
+	HashCheckMode *HashCheckerMode `json:"hashCheckMode"`
+}
+
 type IDArrayFilter struct {
 	ContainsAll []*string `json:"containsAll"`
 	Length      *int      `json:"length"`
@@ -152,6 +157,30 @@ type RemoveMxid struct {
 	Mxid string `json:"mxid"`
 }
 
+type RoomConfigUpdate struct {
+	Debug           *bool                    `json:"debug"`
+	AdminPowerLevel *int                     `json:"adminPowerLevel"`
+	HashChecker     *HashCheckerConfigUpdate `json:"hashChecker"`
+}
+
+type RoomConnection struct {
+	PageInfo        *PageInfo   `json:"pageInfo"`
+	Edges           []*RoomEdge `json:"edges"`
+	SubscribedLists []string    `json:"subscribedLists"`
+}
+
+type RoomEdge struct {
+	Node   *Room  `json:"node"`
+	Cursor string `json:"cursor"`
+}
+
+type RoomFilter struct {
+	ID      *string `json:"id"`
+	Active  *bool   `json:"active"`
+	Debug   *bool   `json:"debug"`
+	CanEdit *bool   `json:"canEdit"`
+}
+
 type SortRule struct {
 	Direction SortDirection `json:"direction"`
 }
@@ -201,6 +230,51 @@ type UserSort struct {
 	ID       *SortRule `json:"id"`
 	Username *SortRule `json:"username"`
 	Admin    *SortRule `json:"admin"`
+}
+
+type HashCheckerMode string
+
+const (
+	HashCheckerModeNotice HashCheckerMode = "NOTICE"
+	HashCheckerModeDelete HashCheckerMode = "DELETE"
+	HashCheckerModeMute   HashCheckerMode = "MUTE"
+	HashCheckerModeBan    HashCheckerMode = "BAN"
+)
+
+var AllHashCheckerMode = []HashCheckerMode{
+	HashCheckerModeNotice,
+	HashCheckerModeDelete,
+	HashCheckerModeMute,
+	HashCheckerModeBan,
+}
+
+func (e HashCheckerMode) IsValid() bool {
+	switch e {
+	case HashCheckerModeNotice, HashCheckerModeDelete, HashCheckerModeMute, HashCheckerModeBan:
+		return true
+	}
+	return false
+}
+
+func (e HashCheckerMode) String() string {
+	return string(e)
+}
+
+func (e *HashCheckerMode) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = HashCheckerMode(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid HashCheckerMode", str)
+	}
+	return nil
+}
+
+func (e HashCheckerMode) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type SortDirection string

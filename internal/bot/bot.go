@@ -100,6 +100,16 @@ func Run() {
 	// Set up async tasks
 	go startSync(matrixClient)
 	go doInitialUpdate(matrixClient)
+	go doAdminStateUpdate(matrixClient)
+
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+
+		for {
+			go doAdminStateUpdate(matrixClient)
+			<-ticker.C
+		}
+	}()
 
 	<-c
 	log.Printf("Shutting down...")
@@ -176,6 +186,53 @@ func doInitialUpdate(matrixClient *mautrix.Client) {
 
 	// Hand-off list to config helper
 	config.RoomConfigInitialUpdate(resp.JoinedRooms, ctx)
+}
+
+func doAdminStateUpdate(matrixClient *mautrix.Client) {
+	ctx, span := tracer.Tracer.Start(tracer.Ctx, "admin_state_update")
+	defer span.End()
+
+	_, requestSpan := tracer.Tracer.Start(ctx, "request_joined_rooms")
+	resp, err := matrixClient.JoinedRooms()
+	if err != nil {
+		log.Printf("matrix-veles could not read joined rooms, something is horribly wrong")
+		log.Fatalln(err)
+	}
+	requestSpan.End()
+
+	for _, roomId := range resp.JoinedRooms {
+		_, processSpan := tracer.Tracer.Start(ctx, "process_room")
+		processSpan.SetAttributes(attribute.String("room_id", roomId.String()))
+
+		powerLevels, err := GetRoomPowerLevelState(matrixClient, roomId)
+		if err != nil {
+			log.Printf("Failed to get power levels for %s - %v", roomId.String(), err)
+			processSpan.RecordError(err)
+			processSpan.End()
+			continue
+		}
+
+		roomConfig := config.GetRoomConfig(roomId.String())
+
+		var admins []string
+
+		for user, powerLevel := range powerLevels.Users {
+			if powerLevel >= roomConfig.AdminPowerLevel {
+				admins = append(admins, user)
+			}
+		}
+
+		roomConfig = config.GetRoomConfig(roomId.String())
+		roomConfig.Admins = admins
+		err = config.SaveRoomConfig(&roomConfig)
+		if err != nil {
+			processSpan.RecordError(err)
+			processSpan.End()
+			continue
+		}
+
+		processSpan.End()
+	}
 }
 
 // handleMessageEvent wraps message handler taking the mautrix.Client and start timestamp as parameters

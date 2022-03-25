@@ -13,6 +13,7 @@ import (
 
 	"github.com/Unkn0wnCat/matrix-veles/graph/generated"
 	"github.com/Unkn0wnCat/matrix-veles/graph/model"
+	"github.com/Unkn0wnCat/matrix-veles/internal/config"
 	"github.com/Unkn0wnCat/matrix-veles/internal/db"
 	model2 "github.com/Unkn0wnCat/matrix-veles/internal/db/model"
 	jwt "github.com/golang-jwt/jwt/v4"
@@ -426,6 +427,10 @@ func (r *mutationResolver) RemoveMxid(ctx context.Context, input model.RemoveMxi
 	}
 
 	return model.MakeUser(user), nil
+}
+
+func (r *mutationResolver) ReconfigureRoom(ctx context.Context, input model.RoomConfigUpdate) (*model.Room, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *mutationResolver) CreateEntry(ctx context.Context, input model.CreateEntry) (*model.Entry, error) {
@@ -890,6 +895,86 @@ func (r *queryResolver) Entries(ctx context.Context, first *int, after *string, 
 	}
 
 	return &model.EntryConnection{
+		PageInfo: &model.PageInfo{
+			HasPreviousPage: isAfter,
+			HasNextPage:     hasMore,
+			StartCursor:     firstEntry.ID.Hex(),
+			EndCursor:       lastEntry.ID.Hex(),
+		},
+		Edges: edges,
+	}, nil
+}
+
+func (r *queryResolver) Rooms(ctx context.Context, first *int, after *string, filter *model.RoomFilter) (*model.RoomConnection, error) {
+	userId, _ := GetUserIDFromContext(ctx)
+
+	if userId == nil {
+		userId = &primitive.ObjectID{}
+	}
+
+	dbFilter, dbSort, dbLimit, err := buildDBRoomFilter(first, after, filter, *userId)
+	if err != nil {
+		return nil, err
+	}
+
+	coll := db.Db.Collection(viper.GetString("bot.mongo.collection.rooms"))
+
+	newLimit := *dbLimit + 1
+
+	findOpts := options.FindOptions{
+		Limit: &newLimit,
+		Sort:  *dbSort,
+	}
+
+	res, err := coll.Find(ctx, *dbFilter, &findOpts)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	var rawEntries []config.RoomConfig
+
+	err = res.All(ctx, &rawEntries)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	if len(rawEntries) == 0 {
+		return nil, errors.New("not found")
+	}
+
+	lastEntryI := len(rawEntries) - 1
+	if lastEntryI > 0 {
+		lastEntryI--
+	}
+
+	firstEntry := rawEntries[0]
+	lastEntry := rawEntries[lastEntryI]
+
+	isAfter := false
+
+	if after != nil {
+		isAfter = true
+	}
+
+	hasMore := false
+	if int64(len(rawEntries)) > *dbLimit {
+		hasMore = true
+	}
+
+	var edges []*model.RoomEdge
+
+	for i, rawRoom := range rawEntries {
+		if int64(i) == *dbLimit {
+			continue
+		}
+
+		edges = append(edges, &model.RoomEdge{
+			Node:   model.MakeRoom(&rawRoom),
+			Cursor: rawRoom.ID.Hex(),
+		})
+	}
+
+	return &model.RoomConnection{
 		PageInfo: &model.PageInfo{
 			HasPreviousPage: isAfter,
 			HasNextPage:     hasMore,

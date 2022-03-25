@@ -527,3 +527,79 @@ func ResolveComments(comments []*model2.DBComment, first *int, after *string) (*
 		Edges: nil,
 	}, nil
 }
+
+func buildDBRoomFilter(first *int, after *string, filter *model.RoomFilter /*, sort *model.UserSort*/, userId primitive.ObjectID) (*bson.M, *bson.M, *int64, error) {
+	compiledFilter := bson.M{}
+	compiledSort := bson.M{}
+
+	var filterBson *bson.M
+	var cursorBson *bson.M
+	limit := 25
+
+	/*if sort != nil {
+		if sort.ID != nil {
+			compiledSort["_id"] = buildSortRule(sort.ID)
+		}
+		if sort.Username != nil {
+			compiledSort["username"] = buildSortRule(sort.Username)
+		}
+		if sort.Admin != nil {
+			compiledSort["admin"] = buildSortRule(sort.Admin)
+		}
+	}*/
+
+	if first != nil {
+		limit = *first
+	}
+
+	if after != nil {
+		cursorBsonW := bson.M{}
+
+		afterID, err := primitive.ObjectIDFromHex(*after)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		cursorBsonW["_id"] = bson.M{"$gt": afterID}
+
+		cursorBson = &cursorBsonW
+	}
+
+	if filter != nil {
+		filterBsonW := bson.M{}
+
+		if filter.ID != nil {
+			filterBsonW["_id"] = *filter.ID
+		}
+
+		if filter.Debug != nil {
+			filterBsonW["debug"] = *filter.Debug
+		}
+
+		if filter.Active != nil {
+			filterBsonW["active"] = *filter.Active
+		}
+
+		if filter.CanEdit != nil && *filter.CanEdit == true {
+			filterBsonW["admins"] = userId
+		}
+
+		filterBson = &filterBsonW
+	}
+
+	if filterBson != nil && cursorBson != nil {
+		compiledFilter["$and"] = bson.A{*cursorBson, *filterBson}
+	}
+
+	if filterBson == nil && cursorBson != nil {
+		compiledFilter = *cursorBson
+	}
+
+	if filterBson != nil && cursorBson == nil {
+		compiledFilter = *filterBson
+	}
+
+	convLimit := int64(limit)
+
+	return &compiledFilter, &compiledSort, &convLimit, nil
+}

@@ -7,7 +7,6 @@ scalar Time
 directive @loggedIn on FIELD_DEFINITION
 directive @hasRole(role: UserRole!) on FIELD_DEFINITION
 directive @owner on FIELD_DEFINITION
-directive @maintainer on FIELD_DEFINITION
 
 enum UserRole {
     ADMIN
@@ -29,6 +28,38 @@ type PageInfo {
 
 input SortRule {
     direction: SortDirection!
+}
+
+enum HashCheckerMode {
+    NOTICE # Just post a notice
+    DELETE # Delete message, post notice
+    MUTE   # Mute user, delete message, post notice
+    BAN    # Ban user, delete message, post notice
+}
+
+type HashCheckerConfig {
+    chatNotice: Boolean!
+    hashCheckMode: HashCheckerMode!
+}
+
+type Room {
+    id: ID!
+    active: Boolean!
+    roomId: String!
+    debug: Boolean!
+    adminPowerLevel: Int!
+    hashCheckerConfig: HashCheckerConfig!
+}
+
+type RoomConnection {
+    pageInfo: PageInfo!
+    edges: [RoomEdge!]!
+    subscribedLists: [ID!]
+}
+
+type RoomEdge {
+    node: Room!
+    cursor: String!
 }
 
 type User {
@@ -198,10 +229,19 @@ input EntrySort {
     addedBy: SortRule
 }
 
+input RoomFilter {
+    id: ID
+    active: Boolean
+    debug: Boolean
+    canEdit: Boolean
+}
+
 type Query {
     users(first: Int, after: String, filter: UserFilter, sort: UserSort): UserConnection @loggedIn
     lists(first: Int, after: String, filter: ListFilter, sort: ListSort): ListConnection @loggedIn
     entries(first: Int, after: String, filter: EntryFilter, sort: EntrySort): EntryConnection @loggedIn
+    rooms(first: Int, after: String, filter: RoomFilter): RoomConnection @loggedIn
+
 
     user(id: ID, username: String): User @loggedIn
     entry(id: ID, hashValue: String): Entry @loggedIn
@@ -264,11 +304,24 @@ input RemoveMXID {
     mxid: String!
 }
 
+input RoomConfigUpdate {
+    debug: Boolean
+    adminPowerLevel: Int
+    hashChecker: HashCheckerConfigUpdate
+}
+
+input HashCheckerConfigUpdate {
+    chatNotice: Boolean
+    hashCheckMode: HashCheckerMode
+}
+
 type Mutation {
     login(input: Login!): String!
     register(input: Register!): String! @hasRole(role: UNAUTHENTICATED)
     addMXID(input: AddMXID!): User! @loggedIn
     removeMXID(input: RemoveMXID!): User! @loggedIn
+
+    reconfigureRoom(input: RoomConfigUpdate!): Room! @loggedIn
 
     createEntry(input: CreateEntry!): Entry! @loggedIn
     commentEntry(input: CommentEntry!): Entry! @loggedIn

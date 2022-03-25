@@ -45,10 +45,9 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
-	HasRole    func(ctx context.Context, obj interface{}, next graphql.Resolver, role model.UserRole) (res interface{}, err error)
-	LoggedIn   func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
-	Maintainer func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
-	Owner      func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	HasRole  func(ctx context.Context, obj interface{}, next graphql.Resolver, role model.UserRole) (res interface{}, err error)
+	LoggedIn func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
+	Owner    func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -88,6 +87,11 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	HashCheckerConfig struct {
+		ChatNotice    func(childComplexity int) int
+		HashCheckMode func(childComplexity int) int
+	}
+
 	List struct {
 		Comments    func(childComplexity int, first *int, after *string) int
 		Creator     func(childComplexity int) int
@@ -117,6 +121,7 @@ type ComplexityRoot struct {
 		CreateList      func(childComplexity int, input model.CreateList) int
 		DeleteList      func(childComplexity int, input string) int
 		Login           func(childComplexity int, input model.Login) int
+		ReconfigureRoom func(childComplexity int, input model.RoomConfigUpdate) int
 		Register        func(childComplexity int, input model.Register) int
 		RemoveFromLists func(childComplexity int, input model.RemoveFromLists) int
 		RemoveMxid      func(childComplexity int, input model.RemoveMxid) int
@@ -134,9 +139,30 @@ type ComplexityRoot struct {
 		Entry   func(childComplexity int, id *string, hashValue *string) int
 		List    func(childComplexity int, id *string, name *string) int
 		Lists   func(childComplexity int, first *int, after *string, filter *model.ListFilter, sort *model.ListSort) int
+		Rooms   func(childComplexity int, first *int, after *string, filter *model.RoomFilter) int
 		Self    func(childComplexity int) int
 		User    func(childComplexity int, id *string, username *string) int
 		Users   func(childComplexity int, first *int, after *string, filter *model.UserFilter, sort *model.UserSort) int
+	}
+
+	Room struct {
+		Active            func(childComplexity int) int
+		AdminPowerLevel   func(childComplexity int) int
+		Debug             func(childComplexity int) int
+		HashCheckerConfig func(childComplexity int) int
+		ID                func(childComplexity int) int
+		RoomID            func(childComplexity int) int
+	}
+
+	RoomConnection struct {
+		Edges           func(childComplexity int) int
+		PageInfo        func(childComplexity int) int
+		SubscribedLists func(childComplexity int) int
+	}
+
+	RoomEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	User struct {
@@ -178,6 +204,7 @@ type MutationResolver interface {
 	Register(ctx context.Context, input model.Register) (string, error)
 	AddMxid(ctx context.Context, input model.AddMxid) (*model.User, error)
 	RemoveMxid(ctx context.Context, input model.RemoveMxid) (*model.User, error)
+	ReconfigureRoom(ctx context.Context, input model.RoomConfigUpdate) (*model.Room, error)
 	CreateEntry(ctx context.Context, input model.CreateEntry) (*model.Entry, error)
 	CommentEntry(ctx context.Context, input model.CommentEntry) (*model.Entry, error)
 	AddToLists(ctx context.Context, input model.AddToLists) (*model.Entry, error)
@@ -190,6 +217,7 @@ type QueryResolver interface {
 	Users(ctx context.Context, first *int, after *string, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error)
 	Lists(ctx context.Context, first *int, after *string, filter *model.ListFilter, sort *model.ListSort) (*model.ListConnection, error)
 	Entries(ctx context.Context, first *int, after *string, filter *model.EntryFilter, sort *model.EntrySort) (*model.EntryConnection, error)
+	Rooms(ctx context.Context, first *int, after *string, filter *model.RoomFilter) (*model.RoomConnection, error)
 	User(ctx context.Context, id *string, username *string) (*model.User, error)
 	Entry(ctx context.Context, id *string, hashValue *string) (*model.Entry, error)
 	List(ctx context.Context, id *string, name *string) (*model.List, error)
@@ -346,6 +374,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.EntryEdge.Node(childComplexity), true
+
+	case "HashCheckerConfig.chatNotice":
+		if e.complexity.HashCheckerConfig.ChatNotice == nil {
+			break
+		}
+
+		return e.complexity.HashCheckerConfig.ChatNotice(childComplexity), true
+
+	case "HashCheckerConfig.hashCheckMode":
+		if e.complexity.HashCheckerConfig.HashCheckMode == nil {
+			break
+		}
+
+		return e.complexity.HashCheckerConfig.HashCheckMode(childComplexity), true
 
 	case "List.comments":
 		if e.complexity.List.Comments == nil {
@@ -535,6 +577,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.Login(childComplexity, args["input"].(model.Login)), true
 
+	case "Mutation.reconfigureRoom":
+		if e.complexity.Mutation.ReconfigureRoom == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_reconfigureRoom_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ReconfigureRoom(childComplexity, args["input"].(model.RoomConfigUpdate)), true
+
 	case "Mutation.register":
 		if e.complexity.Mutation.Register == nil {
 			break
@@ -647,6 +701,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Lists(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*model.ListFilter), args["sort"].(*model.ListSort)), true
 
+	case "Query.rooms":
+		if e.complexity.Query.Rooms == nil {
+			break
+		}
+
+		args, err := ec.field_Query_rooms_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Rooms(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*model.RoomFilter)), true
+
 	case "Query.self":
 		if e.complexity.Query.Self == nil {
 			break
@@ -677,6 +743,83 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Users(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*model.UserFilter), args["sort"].(*model.UserSort)), true
+
+	case "Room.active":
+		if e.complexity.Room.Active == nil {
+			break
+		}
+
+		return e.complexity.Room.Active(childComplexity), true
+
+	case "Room.adminPowerLevel":
+		if e.complexity.Room.AdminPowerLevel == nil {
+			break
+		}
+
+		return e.complexity.Room.AdminPowerLevel(childComplexity), true
+
+	case "Room.debug":
+		if e.complexity.Room.Debug == nil {
+			break
+		}
+
+		return e.complexity.Room.Debug(childComplexity), true
+
+	case "Room.hashCheckerConfig":
+		if e.complexity.Room.HashCheckerConfig == nil {
+			break
+		}
+
+		return e.complexity.Room.HashCheckerConfig(childComplexity), true
+
+	case "Room.id":
+		if e.complexity.Room.ID == nil {
+			break
+		}
+
+		return e.complexity.Room.ID(childComplexity), true
+
+	case "Room.roomId":
+		if e.complexity.Room.RoomID == nil {
+			break
+		}
+
+		return e.complexity.Room.RoomID(childComplexity), true
+
+	case "RoomConnection.edges":
+		if e.complexity.RoomConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.RoomConnection.Edges(childComplexity), true
+
+	case "RoomConnection.pageInfo":
+		if e.complexity.RoomConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.RoomConnection.PageInfo(childComplexity), true
+
+	case "RoomConnection.subscribedLists":
+		if e.complexity.RoomConnection.SubscribedLists == nil {
+			break
+		}
+
+		return e.complexity.RoomConnection.SubscribedLists(childComplexity), true
+
+	case "RoomEdge.cursor":
+		if e.complexity.RoomEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.RoomEdge.Cursor(childComplexity), true
+
+	case "RoomEdge.node":
+		if e.complexity.RoomEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.RoomEdge.Node(childComplexity), true
 
 	case "User.admin":
 		if e.complexity.User.Admin == nil {
@@ -814,7 +957,6 @@ scalar Time
 directive @loggedIn on FIELD_DEFINITION
 directive @hasRole(role: UserRole!) on FIELD_DEFINITION
 directive @owner on FIELD_DEFINITION
-directive @maintainer on FIELD_DEFINITION
 
 enum UserRole {
     ADMIN
@@ -836,6 +978,38 @@ type PageInfo {
 
 input SortRule {
     direction: SortDirection!
+}
+
+enum HashCheckerMode {
+    NOTICE # Just post a notice
+    DELETE # Delete message, post notice
+    MUTE   # Mute user, delete message, post notice
+    BAN    # Ban user, delete message, post notice
+}
+
+type HashCheckerConfig {
+    chatNotice: Boolean!
+    hashCheckMode: HashCheckerMode!
+}
+
+type Room {
+    id: ID!
+    active: Boolean!
+    roomId: String!
+    debug: Boolean!
+    adminPowerLevel: Int!
+    hashCheckerConfig: HashCheckerConfig!
+}
+
+type RoomConnection {
+    pageInfo: PageInfo!
+    edges: [RoomEdge!]!
+    subscribedLists: [ID!]
+}
+
+type RoomEdge {
+    node: Room!
+    cursor: String!
 }
 
 type User {
@@ -1005,10 +1179,19 @@ input EntrySort {
     addedBy: SortRule
 }
 
+input RoomFilter {
+    id: ID
+    active: Boolean
+    debug: Boolean
+    canEdit: Boolean
+}
+
 type Query {
     users(first: Int, after: String, filter: UserFilter, sort: UserSort): UserConnection @loggedIn
     lists(first: Int, after: String, filter: ListFilter, sort: ListSort): ListConnection @loggedIn
     entries(first: Int, after: String, filter: EntryFilter, sort: EntrySort): EntryConnection @loggedIn
+    rooms(first: Int, after: String, filter: RoomFilter): RoomConnection @loggedIn
+
 
     user(id: ID, username: String): User @loggedIn
     entry(id: ID, hashValue: String): Entry @loggedIn
@@ -1071,11 +1254,24 @@ input RemoveMXID {
     mxid: String!
 }
 
+input RoomConfigUpdate {
+    debug: Boolean
+    adminPowerLevel: Int
+    hashChecker: HashCheckerConfigUpdate
+}
+
+input HashCheckerConfigUpdate {
+    chatNotice: Boolean
+    hashCheckMode: HashCheckerMode
+}
+
 type Mutation {
     login(input: Login!): String!
     register(input: Register!): String! @hasRole(role: UNAUTHENTICATED)
     addMXID(input: AddMXID!): User! @loggedIn
     removeMXID(input: RemoveMXID!): User! @loggedIn
+
+    reconfigureRoom(input: RoomConfigUpdate!): Room! @loggedIn
 
     createEntry(input: CreateEntry!): Entry! @loggedIn
     commentEntry(input: CommentEntry!): Entry! @loggedIn
@@ -1350,6 +1546,21 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_reconfigureRoom_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.RoomConfigUpdate
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNRoomConfigUpdate2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoomConfigUpdate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_register_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1539,6 +1750,39 @@ func (ec *executionContext) field_Query_lists_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["sort"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_rooms_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *model.RoomFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalORoomFilter2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoomFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
 	return args, nil
 }
 
@@ -2281,6 +2525,76 @@ func (ec *executionContext) _EntryEdge_cursor(ctx context.Context, field graphql
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _HashCheckerConfig_chatNotice(ctx context.Context, field graphql.CollectedField, obj *model.HashCheckerConfig) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "HashCheckerConfig",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ChatNotice, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _HashCheckerConfig_hashCheckMode(ctx context.Context, field graphql.CollectedField, obj *model.HashCheckerConfig) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "HashCheckerConfig",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HashCheckMode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.HashCheckerMode)
+	fc.Result = res
+	return ec.marshalNHashCheckerMode2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐHashCheckerMode(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _List_id(ctx context.Context, field graphql.CollectedField, obj *model.List) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2908,6 +3222,68 @@ func (ec *executionContext) _Mutation_removeMXID(ctx context.Context, field grap
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_reconfigureRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_reconfigureRoom_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().ReconfigureRoom(rctx, args["input"].(model.RoomConfigUpdate))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Room); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.Room`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Room)
+	fc.Result = res
+	return ec.marshalNRoom2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoom(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createEntry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3667,6 +4043,65 @@ func (ec *executionContext) _Query_entries(ctx context.Context, field graphql.Co
 	return ec.marshalOEntryConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐEntryConnection(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_rooms(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_rooms_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Rooms(rctx, args["first"].(*int), args["after"].(*string), args["filter"].(*model.RoomFilter))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.RoomConnection); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.RoomConnection`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.RoomConnection)
+	fc.Result = res
+	return ec.marshalORoomConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoomConnection(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_user(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3965,6 +4400,388 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Room_id(ctx context.Context, field graphql.CollectedField, obj *model.Room) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Room",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Room_active(ctx context.Context, field graphql.CollectedField, obj *model.Room) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Room",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Active, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Room_roomId(ctx context.Context, field graphql.CollectedField, obj *model.Room) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Room",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RoomID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Room_debug(ctx context.Context, field graphql.CollectedField, obj *model.Room) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Room",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Debug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Room_adminPowerLevel(ctx context.Context, field graphql.CollectedField, obj *model.Room) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Room",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AdminPowerLevel, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Room_hashCheckerConfig(ctx context.Context, field graphql.CollectedField, obj *model.Room) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Room",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HashCheckerConfig, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.HashCheckerConfig)
+	fc.Result = res
+	return ec.marshalNHashCheckerConfig2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐHashCheckerConfig(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RoomConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.RoomConnection) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RoomConnection",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RoomConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.RoomConnection) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RoomConnection",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.RoomEdge)
+	fc.Result = res
+	return ec.marshalNRoomEdge2ᚕᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoomEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RoomConnection_subscribedLists(ctx context.Context, field graphql.CollectedField, obj *model.RoomConnection) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RoomConnection",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SubscribedLists, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOID2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RoomEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.RoomEdge) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RoomEdge",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Room)
+	fc.Result = res
+	return ec.marshalNRoom2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoom(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _RoomEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.RoomEdge) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "RoomEdge",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -5762,6 +6579,37 @@ func (ec *executionContext) unmarshalInputEntrySort(ctx context.Context, obj int
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputHashCheckerConfigUpdate(ctx context.Context, obj interface{}) (model.HashCheckerConfigUpdate, error) {
+	var it model.HashCheckerConfigUpdate
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "chatNotice":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chatNotice"))
+			it.ChatNotice, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "hashCheckMode":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hashCheckMode"))
+			it.HashCheckMode, err = ec.unmarshalOHashCheckerMode2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐHashCheckerMode(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputIDArrayFilter(ctx context.Context, obj interface{}) (model.IDArrayFilter, error) {
 	var it model.IDArrayFilter
 	asMap := map[string]interface{}{}
@@ -6072,6 +6920,92 @@ func (ec *executionContext) unmarshalInputRemoveMXID(ctx context.Context, obj in
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mxid"))
 			it.Mxid, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRoomConfigUpdate(ctx context.Context, obj interface{}) (model.RoomConfigUpdate, error) {
+	var it model.RoomConfigUpdate
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "debug":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
+			it.Debug, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "adminPowerLevel":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("adminPowerLevel"))
+			it.AdminPowerLevel, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "hashChecker":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hashChecker"))
+			it.HashChecker, err = ec.unmarshalOHashCheckerConfigUpdate2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐHashCheckerConfigUpdate(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputRoomFilter(ctx context.Context, obj interface{}) (model.RoomFilter, error) {
+	var it model.RoomFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			it.ID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "active":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("active"))
+			it.Active, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "debug":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("debug"))
+			it.Debug, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "canEdit":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("canEdit"))
+			it.CanEdit, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6603,6 +7537,38 @@ func (ec *executionContext) _EntryEdge(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var hashCheckerConfigImplementors = []string{"HashCheckerConfig"}
+
+func (ec *executionContext) _HashCheckerConfig(ctx context.Context, sel ast.SelectionSet, obj *model.HashCheckerConfig) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, hashCheckerConfigImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("HashCheckerConfig")
+		case "chatNotice":
+			out.Values[i] = ec._HashCheckerConfig_chatNotice(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "hashCheckMode":
+			out.Values[i] = ec._HashCheckerConfig_hashCheckMode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var listImplementors = []string{"List"}
 
 func (ec *executionContext) _List(ctx context.Context, sel ast.SelectionSet, obj *model.List) graphql.Marshaler {
@@ -6786,6 +7752,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "reconfigureRoom":
+			out.Values[i] = ec._Mutation_reconfigureRoom(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createEntry":
 			out.Values[i] = ec._Mutation_createEntry(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -6922,6 +7893,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_entries(ctx, field)
 				return res
 			})
+		case "rooms":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_rooms(ctx, field)
+				return res
+			})
 		case "user":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -6970,6 +7952,124 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
 			out.Values[i] = ec._Query___schema(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var roomImplementors = []string{"Room"}
+
+func (ec *executionContext) _Room(ctx context.Context, sel ast.SelectionSet, obj *model.Room) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, roomImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Room")
+		case "id":
+			out.Values[i] = ec._Room_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "active":
+			out.Values[i] = ec._Room_active(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "roomId":
+			out.Values[i] = ec._Room_roomId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "debug":
+			out.Values[i] = ec._Room_debug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "adminPowerLevel":
+			out.Values[i] = ec._Room_adminPowerLevel(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "hashCheckerConfig":
+			out.Values[i] = ec._Room_hashCheckerConfig(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var roomConnectionImplementors = []string{"RoomConnection"}
+
+func (ec *executionContext) _RoomConnection(ctx context.Context, sel ast.SelectionSet, obj *model.RoomConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, roomConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoomConnection")
+		case "pageInfo":
+			out.Values[i] = ec._RoomConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "edges":
+			out.Values[i] = ec._RoomConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "subscribedLists":
+			out.Values[i] = ec._RoomConnection_subscribedLists(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var roomEdgeImplementors = []string{"RoomEdge"}
+
+func (ec *executionContext) _RoomEdge(ctx context.Context, sel ast.SelectionSet, obj *model.RoomEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, roomEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RoomEdge")
+		case "node":
+			out.Values[i] = ec._RoomEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._RoomEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7510,6 +8610,26 @@ func (ec *executionContext) marshalNEntryEdge2ᚖgithubᚗcomᚋUnkn0wnCatᚋmat
 	return ec._EntryEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNHashCheckerConfig2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐHashCheckerConfig(ctx context.Context, sel ast.SelectionSet, v *model.HashCheckerConfig) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._HashCheckerConfig(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNHashCheckerMode2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐHashCheckerMode(ctx context.Context, v interface{}) (model.HashCheckerMode, error) {
+	var res model.HashCheckerMode
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNHashCheckerMode2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐHashCheckerMode(ctx context.Context, sel ast.SelectionSet, v model.HashCheckerMode) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7559,6 +8679,21 @@ func (ec *executionContext) marshalNID2ᚕstringᚄ(ctx context.Context, sel ast
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNList2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐList(ctx context.Context, sel ast.SelectionSet, v model.List) graphql.Marshaler {
@@ -7657,6 +8792,79 @@ func (ec *executionContext) unmarshalNRemoveFromLists2githubᚗcomᚋUnkn0wnCat�
 func (ec *executionContext) unmarshalNRemoveMXID2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRemoveMxid(ctx context.Context, v interface{}) (model.RemoveMxid, error) {
 	res, err := ec.unmarshalInputRemoveMXID(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRoom2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoom(ctx context.Context, sel ast.SelectionSet, v model.Room) graphql.Marshaler {
+	return ec._Room(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRoom2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoom(ctx context.Context, sel ast.SelectionSet, v *model.Room) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Room(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNRoomConfigUpdate2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoomConfigUpdate(ctx context.Context, v interface{}) (model.RoomConfigUpdate, error) {
+	res, err := ec.unmarshalInputRoomConfigUpdate(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRoomEdge2ᚕᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoomEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RoomEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNRoomEdge2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoomEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNRoomEdge2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoomEdge(ctx context.Context, sel ast.SelectionSet, v *model.RoomEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._RoomEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNSortDirection2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐSortDirection(ctx context.Context, v interface{}) (model.SortDirection, error) {
@@ -8154,6 +9362,30 @@ func (ec *executionContext) unmarshalOEntrySort2ᚖgithubᚗcomᚋUnkn0wnCatᚋm
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalOHashCheckerConfigUpdate2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐHashCheckerConfigUpdate(ctx context.Context, v interface{}) (*model.HashCheckerConfigUpdate, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputHashCheckerConfigUpdate(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOHashCheckerMode2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐHashCheckerMode(ctx context.Context, v interface{}) (*model.HashCheckerMode, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.HashCheckerMode)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOHashCheckerMode2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐHashCheckerMode(ctx context.Context, sel ast.SelectionSet, v *model.HashCheckerMode) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) unmarshalOID2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
 	if v == nil {
 		return nil, nil
@@ -8321,6 +9553,21 @@ func (ec *executionContext) unmarshalOListSort2ᚖgithubᚗcomᚋUnkn0wnCatᚋma
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputListSort(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalORoomConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoomConnection(ctx context.Context, sel ast.SelectionSet, v *model.RoomConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._RoomConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalORoomFilter2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoomFilter(ctx context.Context, v interface{}) (*model.RoomFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputRoomFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

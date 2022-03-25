@@ -43,6 +43,8 @@ type RoomConfig struct {
 
 	// HashChecker contains configuration specific to the hash-checker
 	HashChecker HashCheckerConfig `bson:"hash_checker"`
+
+	Admins []string `bson:"admins"`
 }
 
 type HashCheckerConfig struct {
