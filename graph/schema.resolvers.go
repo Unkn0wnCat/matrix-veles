@@ -430,7 +430,190 @@ func (r *mutationResolver) RemoveMxid(ctx context.Context, input model.RemoveMxi
 }
 
 func (r *mutationResolver) ReconfigureRoom(ctx context.Context, input model.RoomConfigUpdate) (*model.Room, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := primitive.ObjectIDFromHex(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	rConfig, err := config.GetRoomConfigByObjectID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	match := false
+
+	for _, admin := range rConfig.Admins {
+		for _, mxid := range user.MatrixLinks {
+			if *mxid == admin {
+				match = true
+			}
+		}
+	}
+
+	if !match {
+		return nil, errors.New("unauthorized")
+	}
+
+	if input.Debug != nil {
+		rConfig.Debug = *input.Debug
+	}
+
+	if input.HashChecker != nil {
+		if input.HashChecker.HashCheckMode != nil {
+			newMode := uint8(0)
+			switch *input.HashChecker.HashCheckMode {
+			case model.HashCheckerModeNotice:
+				newMode = 0
+			case model.HashCheckerModeDelete:
+				newMode = 1
+			case model.HashCheckerModeMute:
+				newMode = 2
+			case model.HashCheckerModeBan:
+				newMode = 3
+			default:
+				return nil, errors.New("malformed hash check mode")
+			}
+
+			rConfig.HashChecker.HashCheckMode = newMode
+		}
+
+		if input.HashChecker.ChatNotice != nil {
+			rConfig.HashChecker.NoticeToChat = *input.HashChecker.ChatNotice
+		}
+	}
+
+	if input.AdminPowerLevel != nil {
+		if *input.AdminPowerLevel > 100 {
+			return nil, errors.New("REFUSING TO SET ADMIN POWER LEVEL > 100")
+		}
+		rConfig.AdminPowerLevel = *input.AdminPowerLevel
+	}
+
+	err = config.SaveRoomConfig(rConfig)
+
+	return model.MakeRoom(rConfig), nil
+}
+
+func (r *mutationResolver) SubscribeToList(ctx context.Context, input model.ListSubscriptionUpdate) (*model.Room, error) {
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := primitive.ObjectIDFromHex(input.RoomID)
+	if err != nil {
+		return nil, err
+	}
+
+	rConfig, err := config.GetRoomConfigByObjectID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	match := false
+
+	for _, admin := range rConfig.Admins {
+		for _, mxid := range user.MatrixLinks {
+			if *mxid == admin {
+				match = true
+			}
+		}
+	}
+
+	if !match {
+		return nil, errors.New("unauthorized")
+	}
+
+	listIdP, err := primitive.ObjectIDFromHex(input.ListID)
+	if err != nil {
+		return nil, errors.New("unknown list")
+	}
+
+	_, err = db.GetListByID(listIdP)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New("unknown list")
+		}
+		return nil, errors.New("database error")
+	}
+
+	for _, list := range rConfig.HashChecker.SubscribedLists {
+		if list.Hex() == input.ListID {
+			return model.MakeRoom(rConfig), nil
+		}
+	}
+
+	rConfig.HashChecker.SubscribedLists = append(rConfig.HashChecker.SubscribedLists, &listIdP)
+
+	err = config.SaveRoomConfig(rConfig)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	return model.MakeRoom(rConfig), nil
+}
+
+func (r *mutationResolver) UnsubscribeFromList(ctx context.Context, input model.ListSubscriptionUpdate) (*model.Room, error) {
+	user, err := GetUserFromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := primitive.ObjectIDFromHex(input.RoomID)
+	if err != nil {
+		return nil, err
+	}
+
+	rConfig, err := config.GetRoomConfigByObjectID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	match := false
+
+	for _, admin := range rConfig.Admins {
+		for _, mxid := range user.MatrixLinks {
+			if *mxid == admin {
+				match = true
+			}
+		}
+	}
+
+	if !match {
+		return nil, errors.New("unauthorized")
+	}
+
+	listIdP, err := primitive.ObjectIDFromHex(input.ListID)
+	if err != nil {
+		return nil, errors.New("unknown list")
+	}
+
+	_, err = db.GetListByID(listIdP)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, errors.New("unknown list")
+		}
+		return nil, errors.New("database error")
+	}
+
+	for i, list := range rConfig.HashChecker.SubscribedLists {
+		if list.Hex() == input.ListID {
+			rConfig.HashChecker.SubscribedLists = append(rConfig.HashChecker.SubscribedLists[:i], rConfig.HashChecker.SubscribedLists[i+1:]...)
+			break
+		}
+	}
+
+	err = config.SaveRoomConfig(rConfig)
+	if err != nil {
+		return nil, errors.New("database error")
+	}
+
+	return model.MakeRoom(rConfig), nil
 }
 
 func (r *mutationResolver) CreateEntry(ctx context.Context, input model.CreateEntry) (*model.Entry, error) {

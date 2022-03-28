@@ -130,6 +130,11 @@ type ListSort struct {
 	Name *SortRule `json:"name"`
 }
 
+type ListSubscriptionUpdate struct {
+	RoomID string `json:"roomId"`
+	ListID string `json:"listId"`
+}
+
 type Login struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -158,6 +163,7 @@ type RemoveMxid struct {
 }
 
 type RoomConfigUpdate struct {
+	ID              string                   `json:"id"`
 	Debug           *bool                    `json:"debug"`
 	AdminPowerLevel *int                     `json:"adminPowerLevel"`
 	HashChecker     *HashCheckerConfigUpdate `json:"hashChecker"`

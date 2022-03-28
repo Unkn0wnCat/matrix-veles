@@ -166,6 +166,24 @@ func GetRoomConfigByRoomID(id string) (*RoomConfig, error) {
 	return &object, nil
 }
 
+func GetRoomConfigByObjectID(id primitive.ObjectID) (*RoomConfig, error) {
+	database := db.DbClient.Database(viper.GetString("bot.mongo.database"))
+
+	res := database.Collection(viper.GetString("bot.mongo.collection.rooms")).FindOne(context.TODO(), bson.D{{"_id", id}})
+	if res.Err() != nil {
+		return nil, res.Err()
+	}
+
+	object := GetDefaultRoomConfig()
+
+	err := res.Decode(&object)
+	if err != nil {
+		return nil, err
+	}
+
+	return &object, nil
+}
+
 func GetDefaultRoomConfig() RoomConfig {
 	return RoomConfig{
 		ID:              primitive.NewObjectID(),

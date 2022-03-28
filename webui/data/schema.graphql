@@ -305,6 +305,7 @@ input RemoveMXID {
 }
 
 input RoomConfigUpdate {
+    id: ID!
     debug: Boolean
     adminPowerLevel: Int
     hashChecker: HashCheckerConfigUpdate

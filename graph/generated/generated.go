@@ -114,18 +114,20 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddMxid         func(childComplexity int, input model.AddMxid) int
-		AddToLists      func(childComplexity int, input model.AddToLists) int
-		CommentEntry    func(childComplexity int, input model.CommentEntry) int
-		CommentList     func(childComplexity int, input model.CommentList) int
-		CreateEntry     func(childComplexity int, input model.CreateEntry) int
-		CreateList      func(childComplexity int, input model.CreateList) int
-		DeleteList      func(childComplexity int, input string) int
-		Login           func(childComplexity int, input model.Login) int
-		ReconfigureRoom func(childComplexity int, input model.RoomConfigUpdate) int
-		Register        func(childComplexity int, input model.Register) int
-		RemoveFromLists func(childComplexity int, input model.RemoveFromLists) int
-		RemoveMxid      func(childComplexity int, input model.RemoveMxid) int
+		AddMxid             func(childComplexity int, input model.AddMxid) int
+		AddToLists          func(childComplexity int, input model.AddToLists) int
+		CommentEntry        func(childComplexity int, input model.CommentEntry) int
+		CommentList         func(childComplexity int, input model.CommentList) int
+		CreateEntry         func(childComplexity int, input model.CreateEntry) int
+		CreateList          func(childComplexity int, input model.CreateList) int
+		DeleteList          func(childComplexity int, input string) int
+		Login               func(childComplexity int, input model.Login) int
+		ReconfigureRoom     func(childComplexity int, input model.RoomConfigUpdate) int
+		Register            func(childComplexity int, input model.Register) int
+		RemoveFromLists     func(childComplexity int, input model.RemoveFromLists) int
+		RemoveMxid          func(childComplexity int, input model.RemoveMxid) int
+		SubscribeToList     func(childComplexity int, input model.ListSubscriptionUpdate) int
+		UnsubscribeFromList func(childComplexity int, input model.ListSubscriptionUpdate) int
 	}
 
 	PageInfo struct {
@@ -205,6 +207,8 @@ type MutationResolver interface {
 	AddMxid(ctx context.Context, input model.AddMxid) (*model.User, error)
 	RemoveMxid(ctx context.Context, input model.RemoveMxid) (*model.User, error)
 	ReconfigureRoom(ctx context.Context, input model.RoomConfigUpdate) (*model.Room, error)
+	SubscribeToList(ctx context.Context, input model.ListSubscriptionUpdate) (*model.Room, error)
+	UnsubscribeFromList(ctx context.Context, input model.ListSubscriptionUpdate) (*model.Room, error)
 	CreateEntry(ctx context.Context, input model.CreateEntry) (*model.Entry, error)
 	CommentEntry(ctx context.Context, input model.CommentEntry) (*model.Entry, error)
 	AddToLists(ctx context.Context, input model.AddToLists) (*model.Entry, error)
@@ -631,6 +635,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RemoveMxid(childComplexity, args["input"].(model.RemoveMxid)), true
+
+	case "Mutation.subscribeToList":
+		if e.complexity.Mutation.SubscribeToList == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_subscribeToList_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SubscribeToList(childComplexity, args["input"].(model.ListSubscriptionUpdate)), true
+
+	case "Mutation.unsubscribeFromList":
+		if e.complexity.Mutation.UnsubscribeFromList == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unsubscribeFromList_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UnsubscribeFromList(childComplexity, args["input"].(model.ListSubscriptionUpdate)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -1255,6 +1283,7 @@ input RemoveMXID {
 }
 
 input RoomConfigUpdate {
+    id: ID!
     debug: Boolean
     adminPowerLevel: Int
     hashChecker: HashCheckerConfigUpdate
@@ -1265,6 +1294,11 @@ input HashCheckerConfigUpdate {
     hashCheckMode: HashCheckerMode
 }
 
+input ListSubscriptionUpdate {
+    roomId: ID!
+    listId: ID!
+}
+
 type Mutation {
     login(input: Login!): String!
     register(input: Register!): String! @hasRole(role: UNAUTHENTICATED)
@@ -1272,6 +1306,8 @@ type Mutation {
     removeMXID(input: RemoveMXID!): User! @loggedIn
 
     reconfigureRoom(input: RoomConfigUpdate!): Room! @loggedIn
+    subscribeToList(input: ListSubscriptionUpdate!): Room! @loggedIn
+    unsubscribeFromList(input: ListSubscriptionUpdate!): Room! @loggedIn
 
     createEntry(input: CreateEntry!): Entry! @loggedIn
     commentEntry(input: CommentEntry!): Entry! @loggedIn
@@ -1598,6 +1634,36 @@ func (ec *executionContext) field_Mutation_removeMXID_args(ctx context.Context, 
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNRemoveMXID2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRemoveMxid(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_subscribeToList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ListSubscriptionUpdate
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNListSubscriptionUpdate2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListSubscriptionUpdate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_unsubscribeFromList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ListSubscriptionUpdate
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNListSubscriptionUpdate2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListSubscriptionUpdate(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3283,6 +3349,130 @@ func (ec *executionContext) _Mutation_reconfigureRoom(ctx context.Context, field
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
 			return ec.resolvers.Mutation().ReconfigureRoom(rctx, args["input"].(model.RoomConfigUpdate))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Room); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.Room`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Room)
+	fc.Result = res
+	return ec.marshalNRoom2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoom(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_subscribeToList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_subscribeToList_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().SubscribeToList(rctx, args["input"].(model.ListSubscriptionUpdate))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.LoggedIn == nil {
+				return nil, errors.New("directive loggedIn is not implemented")
+			}
+			return ec.directives.LoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.Room); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/Unkn0wnCat/matrix-veles/graph/model.Room`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Room)
+	fc.Result = res
+	return ec.marshalNRoom2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐRoom(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_unsubscribeFromList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_unsubscribeFromList_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().UnsubscribeFromList(rctx, args["input"].(model.ListSubscriptionUpdate))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.LoggedIn == nil {
@@ -6805,6 +6995,37 @@ func (ec *executionContext) unmarshalInputListSort(ctx context.Context, obj inte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputListSubscriptionUpdate(ctx context.Context, obj interface{}) (model.ListSubscriptionUpdate, error) {
+	var it model.ListSubscriptionUpdate
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "roomId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roomId"))
+			it.RoomID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "listId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("listId"))
+			it.ListID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputLogin(ctx context.Context, obj interface{}) (model.Login, error) {
 	var it model.Login
 	asMap := map[string]interface{}{}
@@ -6938,6 +7159,14 @@ func (ec *executionContext) unmarshalInputRoomConfigUpdate(ctx context.Context, 
 
 	for k, v := range asMap {
 		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "debug":
 			var err error
 
@@ -7756,6 +7985,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "reconfigureRoom":
 			out.Values[i] = ec._Mutation_reconfigureRoom(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "subscribeToList":
+			out.Values[i] = ec._Mutation_subscribeToList(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "unsubscribeFromList":
+			out.Values[i] = ec._Mutation_unsubscribeFromList(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -8762,6 +9001,11 @@ func (ec *executionContext) marshalNListEdge2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatr
 		return graphql.Null
 	}
 	return ec._ListEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNListSubscriptionUpdate2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListSubscriptionUpdate(ctx context.Context, v interface{}) (model.ListSubscriptionUpdate, error) {
+	res, err := ec.unmarshalInputListSubscriptionUpdate(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNLogin2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐLogin(ctx context.Context, v interface{}) (model.Login, error) {
