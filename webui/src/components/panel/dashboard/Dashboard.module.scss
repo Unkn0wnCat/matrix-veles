@@ -3,15 +3,15 @@
 .dashboardGrid {
   height: 90%;
   display: grid;
-
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr;
   gap: var(--veles-layout-padding);
 
-  @media (max-width: 1300px) {
+  /*grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr;
+
+  @media (max-width: 1300px) {*/
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-  }
+  //}
   @media (max-width: 950px) {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr 1fr 1fr;

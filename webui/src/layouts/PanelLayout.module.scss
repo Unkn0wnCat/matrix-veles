@@ -1,5 +1,7 @@
 @import "../globals";
 
+$navBreakpoint: 1000px;
+
 .skipToContent {
   opacity: 0;
   pointer-events: none;
@@ -62,6 +64,21 @@
     border-bottom: thin solid var(--veles-color-border);
     height: 66px;
 
+    .hamburger {
+      padding: 8px 0 8px 10px;
+      display: none;
+    }
+
+    @media(max-width: 600px) {
+      .hamburger {
+        display: block;
+      }
+
+      >*>span {
+        display: none;
+      }
+    }
+
     a, button {
       @include panelTopBarLink;
     }
@@ -85,6 +102,27 @@
       flex-shrink: 0;
     }
 
+    .navUnderlay {
+      display: none;
+      position: absolute;
+      width: 100%;
+      z-index: 900;
+      background-color: rgba(0, 0, 0, .75);
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+
+      @media(max-width: $navBreakpoint) {
+        display: block;
+        opacity: 0;
+        &.show {
+          opacity: 1;
+          pointer-events: auto;
+        }
+      }
+    }
+
     > nav {
       display: flex;
       flex-direction: column;
@@ -92,6 +130,23 @@
       overflow-x: auto;
       height: calc(100vh - 66px);
       width: 250px;
+      background-color: var(--veles-color-background);
+      transition: left .25s;
+
+      @media (max-width: $navBreakpoint) {
+        left: -250px;
+        position: absolute;
+        z-index: 1000;
+
+        &.expanded {
+          left: 0;
+        }
+      }
+
+      @media (max-width: 400px) {
+        left: -100%;
+        width: 100%;
+      }
 
       >* {
         flex-shrink: 0;
