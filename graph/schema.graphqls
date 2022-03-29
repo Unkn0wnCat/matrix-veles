@@ -46,6 +46,7 @@ type HashCheckerConfig {
 type Room {
     id: ID!
     active: Boolean!
+    name: String!
     roomId: String!
     debug: Boolean!
     adminPowerLevel: Int!

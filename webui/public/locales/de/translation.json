@@ -1,5 +1,17 @@
 {
+  "list": {
+    "none": "Keine Einträge",
+    "loading": "Lade weitere Einträge...",
+    "more": "Mehr zeigen",
+    "end": "Keine weiteren Einträge"
+  },
   "dashboard": {
-    "helloText": "Ayo {{name}}!"
+    "helloText": "Ayo {{name}}!",
+    "my_lists": {
+      "title": "Meine Listen"
+    },
+    "my_rooms": {
+      "title": "Meine Räume"
+    }
   }
 }

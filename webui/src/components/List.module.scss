@@ -1,0 +1,56 @@
+@import "../globals";
+
+.list {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow-y: auto;
+
+  > * {
+    margin-bottom: var(--veles-layout-padding);
+  }
+
+  .eol {
+    display: block;
+    text-align: center;
+    padding: var(--veles-layout-padding);
+    opacity: .5;
+    margin-bottom: 0;
+  }
+
+  .loadMore {
+    display: block;
+    text-align: center;
+    padding: var(--veles-layout-padding);
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    margin-bottom: 0;
+  }
+
+  .loader {
+    margin: 0 auto;
+    padding: var(--veles-layout-padding);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    > svg {
+      animation-name: spinny-spin;
+      animation-duration: 2s;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+    }
+  }
+}
+
+@keyframes spinny-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

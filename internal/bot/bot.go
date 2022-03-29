@@ -100,13 +100,13 @@ func Run() {
 	// Set up async tasks
 	go startSync(matrixClient)
 	go doInitialUpdate(matrixClient)
-	go doAdminStateUpdate(matrixClient)
+	go doRoomStateUpdate(matrixClient)
 
 	go func() {
 		ticker := time.NewTicker(5 * time.Minute)
 
 		for {
-			go doAdminStateUpdate(matrixClient)
+			go doRoomStateUpdate(matrixClient)
 			<-ticker.C
 		}
 	}()
@@ -188,8 +188,8 @@ func doInitialUpdate(matrixClient *mautrix.Client) {
 	config.RoomConfigInitialUpdate(resp.JoinedRooms, ctx)
 }
 
-func doAdminStateUpdate(matrixClient *mautrix.Client) {
-	ctx, span := tracer.Tracer.Start(tracer.Ctx, "admin_state_update")
+func doRoomStateUpdate(matrixClient *mautrix.Client) {
+	ctx, span := tracer.Tracer.Start(tracer.Ctx, "room_state_update")
 	defer span.End()
 
 	_, requestSpan := tracer.Tracer.Start(ctx, "request_joined_rooms")
@@ -222,8 +222,14 @@ func doAdminStateUpdate(matrixClient *mautrix.Client) {
 			}
 		}
 
+		state, _ := GetRoomNameState(matrixClient, roomId)
+
 		roomConfig = config.GetRoomConfig(roomId.String())
 		roomConfig.Admins = admins
+		roomConfig.Name = roomId.String()
+		if state != nil && state.Name != "" {
+			roomConfig.Name = state.Name
+		}
 		err = config.SaveRoomConfig(&roomConfig)
 		if err != nil {
 			processSpan.RecordError(err)

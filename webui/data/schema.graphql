@@ -46,6 +46,7 @@ type HashCheckerConfig {
 type Room {
     id: ID!
     active: Boolean!
+    name: String!
     roomId: String!
     debug: Boolean!
     adminPowerLevel: Int!
@@ -316,6 +317,11 @@ input HashCheckerConfigUpdate {
     hashCheckMode: HashCheckerMode
 }
 
+input ListSubscriptionUpdate {
+    roomId: ID!
+    listId: ID!
+}
+
 type Mutation {
     login(input: Login!): String!
     register(input: Register!): String! @hasRole(role: UNAUTHENTICATED)
@@ -323,6 +329,8 @@ type Mutation {
     removeMXID(input: RemoveMXID!): User! @loggedIn
 
     reconfigureRoom(input: RoomConfigUpdate!): Room! @loggedIn
+    subscribeToList(input: ListSubscriptionUpdate!): Room! @loggedIn
+    unsubscribeFromList(input: ListSubscriptionUpdate!): Room! @loggedIn
 
     createEntry(input: CreateEntry!): Entry! @loggedIn
     commentEntry(input: CommentEntry!): Entry! @loggedIn

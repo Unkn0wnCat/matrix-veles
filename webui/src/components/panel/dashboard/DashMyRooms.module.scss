@@ -1,0 +1,69 @@
+@import "../../../globals";
+
+.dashMyRooms {
+  background-color: var(--veles-color-surface);
+  border: thin solid var(--veles-color-border);
+  padding: var(--veles-layout-padding);
+  padding-bottom: 0;
+  border-radius: var(--veles-layout-border-radius);
+  display: flex;
+  flex-direction: column;
+
+  > * {
+    flex-shrink: 0;
+  }
+
+  .list {
+    .room {
+      background-color: var(--veles-color-surface);
+      padding: var(--veles-layout-padding);
+      border-radius: var(--veles-layout-border-radius);
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+
+      .nameRow {
+        display: flex;
+        align-items: center;
+
+        .name {
+          font-weight: 600;
+          font-size: 1.2em;
+        }
+
+        .badge {
+          padding: 2px var(--veles-layout-padding-slim);
+          background-color: var(--veles-color-surface);
+          border-radius: var(--veles-layout-border-radius);
+          margin-left: 10px;
+          border: thin solid var(--veles-color-border);
+
+          &.red {
+            border-color: var(--veles-color-red);
+          }
+
+          &.blue {
+            border-color: var(--veles-color-blue);
+          }
+
+          &.green {
+            border-color: var(--veles-color-green);
+          }
+        }
+      }
+
+      .id {
+        opacity: .5;
+      }
+    }
+  }
+}
+
+@keyframes spinny-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

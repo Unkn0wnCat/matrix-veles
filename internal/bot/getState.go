@@ -84,3 +84,59 @@ func GetRoomPowerLevelState(matrixClient *mautrix.Client, roomId id.RoomID) (*St
 
 	return &plEventContent, nil
 }
+
+type StateEventRoomName struct {
+	Type           string                    `json:"type"`
+	Sender         string                    `json:"sender"`
+	RoomID         string                    `json:"room_id"`
+	EventID        string                    `json:"event_id"`
+	OriginServerTS int64                     `json:"origin_server_ts"`
+	Content        StateEventRoomNameContent `json:"content"`
+	Unsigned       struct {
+		Age int `json:"age"`
+	} `json:"unsigned"`
+}
+
+type StateEventRoomNameContent struct {
+	Name string
+}
+
+func GetRoomNameState(matrixClient *mautrix.Client, roomId id.RoomID) (*StateEventRoomNameContent, error) {
+	// https://matrix.example.com/_matrix/client/r0/rooms/<roomId.String()>/state
+	url := matrixClient.BuildURL("rooms", roomId.String(), "state")
+
+	res, err := matrixClient.MakeRequest("GET", url, nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("ERROR: Could request room state - %v", err)
+	}
+
+	// res contains an array of state events
+	var stateEvents []StateEventRoomName
+
+	err = json.Unmarshal(res, &stateEvents)
+	if err != nil {
+		return nil, fmt.Errorf("ERROR: Could parse room state - %v", err)
+	}
+
+	// plEventContent will hold the final event
+	var plEventContent StateEventRoomNameContent
+
+	found := false
+
+	for _, e2 := range stateEvents {
+		if e2.Type != event.StateRoomName.Type {
+			continue // If the current event is not of the room name, skip.
+		}
+
+		// This is what we're looking for!
+		found = true
+		plEventContent = e2.Content
+		break
+	}
+
+	if !found {
+		return nil, fmt.Errorf("ERROR: Could find room power level - %v", err)
+	}
+
+	return &plEventContent, nil
+}

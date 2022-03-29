@@ -1,0 +1,40 @@
+@import "../../../globals";
+
+.dashMyLists {
+  background-color: var(--veles-color-surface);
+  border: thin solid var(--veles-color-border);
+  padding: var(--veles-layout-padding);
+  padding-bottom: 0;
+  border-radius: var(--veles-layout-border-radius);
+  display: flex;
+  flex-direction: column;
+
+  > * {
+    flex-shrink: 0;
+  }
+
+  .list {
+    .listEntry {
+      background-color: var(--veles-color-surface);
+      padding: var(--veles-layout-padding);
+      border-radius: var(--veles-layout-border-radius);
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+
+      .nameRow {
+        display: flex;
+        align-items: center;
+
+        .name {
+          font-weight: 600;
+          font-size: 1.2em;
+        }
+      }
+
+      .id {
+        opacity: .5;
+      }
+    }
+  }
+}

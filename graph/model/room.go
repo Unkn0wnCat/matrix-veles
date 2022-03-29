@@ -5,6 +5,7 @@ import "github.com/Unkn0wnCat/matrix-veles/internal/config"
 type Room struct {
 	ID                string             `json:"id"`
 	Active            bool               `json:"active"`
+	Name              string             `json:"name"`
 	RoomID            string             `json:"roomId"`
 	Debug             bool               `json:"debug"`
 	AdminPowerLevel   int                `json:"adminPowerLevel"`
@@ -25,7 +26,8 @@ func MakeRoom(room *config.RoomConfig) *Room {
 	}
 
 	return &Room{
-		ID:              room.ID.String(),
+		ID:              room.ID.Hex(),
+		Name:            room.Name,
 		Active:          room.Active,
 		RoomID:          room.RoomID,
 		Debug:           room.Debug,

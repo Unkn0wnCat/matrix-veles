@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3a1cacd9d1f9fc8ae498211b0141af63>>
+ * @generated SignedSource<<a4ab3c123e20e4c610b878fd82d98eb5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,68 +10,32 @@
 
 import { ConcreteRequest, Query } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type DashboardQuery$variables = {
-  first?: string | null;
+export type ComponentDashMyRooms$variables = {
   count?: number | null;
+  first?: string | null;
 };
-export type DashboardQuery$data = {
-  readonly self: {
-    readonly username: string;
-    readonly id: string;
-    readonly admin: boolean | null;
-  } | null;
-  readonly " $fragmentSpreads": FragmentRefs<"DashboardQueryLists">;
+export type ComponentDashMyRooms$data = {
+  readonly " $fragmentSpreads": FragmentRefs<"DashMyRoomsFragment">;
 };
-export type DashboardQuery = {
-  variables: DashboardQuery$variables;
-  response: DashboardQuery$data;
+export type ComponentDashMyRooms = {
+  variables: ComponentDashMyRooms$variables;
+  response: ComponentDashMyRooms$data;
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "count"
-},
-v1 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "first"
-},
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-},
-v3 = {
-  "alias": null,
-  "args": null,
-  "concreteType": "User",
-  "kind": "LinkedField",
-  "name": "self",
-  "plural": false,
-  "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "username",
-      "storageKey": null
-    },
-    (v2/*: any*/),
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "admin",
-      "storageKey": null
-    }
-  ],
-  "storageKey": null
-},
-v4 = [
+var v0 = [
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "count"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "first"
+  }
+],
+v1 = [
   {
     "kind": "Variable",
     "name": "after",
@@ -92,19 +56,15 @@ v4 = [
 ];
 return {
   "fragment": {
-    "argumentDefinitions": [
-      (v0/*: any*/),
-      (v1/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "DashboardQuery",
+    "name": "ComponentDashMyRooms",
     "selections": [
-      (v3/*: any*/),
       {
         "args": null,
         "kind": "FragmentSpread",
-        "name": "DashboardQueryLists"
+        "name": "DashMyRoomsFragment"
       }
     ],
     "type": "Query",
@@ -112,17 +72,13 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": [
-      (v1/*: any*/),
-      (v0/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "DashboardQuery",
+    "name": "ComponentDashMyRooms",
     "selections": [
-      (v3/*: any*/),
       {
         "alias": null,
-        "args": (v4/*: any*/),
+        "args": (v1/*: any*/),
         "concreteType": "RoomConnection",
         "kind": "LinkedField",
         "name": "rooms",
@@ -144,7 +100,20 @@ return {
                 "name": "node",
                 "plural": false,
                 "selections": [
-                  (v2/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "id",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "name",
+                    "storageKey": null
+                  },
                   {
                     "alias": null,
                     "args": null,
@@ -162,26 +131,8 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "HashCheckerConfig",
-                    "kind": "LinkedField",
-                    "name": "hashCheckerConfig",
-                    "plural": false,
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "chatNotice",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "hashCheckMode",
-                        "storageKey": null
-                      }
-                    ],
+                    "kind": "ScalarField",
+                    "name": "roomId",
                     "storageKey": null
                   },
                   {
@@ -234,28 +185,28 @@ return {
       },
       {
         "alias": null,
-        "args": (v4/*: any*/),
+        "args": (v1/*: any*/),
         "filters": [
           "filter"
         ],
         "handle": "connection",
-        "key": "DashboardQueryLists_rooms",
+        "key": "ComponentDashMyRooms_rooms",
         "kind": "LinkedHandle",
         "name": "rooms"
       }
     ]
   },
   "params": {
-    "cacheID": "f41a91749c22f4e9026e9ae1d21e72a9",
+    "cacheID": "900fab96de8f0dd453020c4443727ed4",
     "id": null,
     "metadata": {},
-    "name": "DashboardQuery",
+    "name": "ComponentDashMyRooms",
     "operationKind": "query",
-    "text": "query DashboardQuery(\n  $first: String\n  $count: Int\n) {\n  self {\n    username\n    id\n    admin\n  }\n  ...DashboardQueryLists\n}\n\nfragment DashboardQueryLists on Query {\n  rooms(after: $first, first: $count, filter: {canEdit: true}) {\n    edges {\n      node {\n        id\n        active\n        debug\n        hashCheckerConfig {\n          chatNotice\n          hashCheckMode\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query ComponentDashMyRooms(\n  $count: Int\n  $first: String\n) {\n  ...DashMyRoomsFragment\n}\n\nfragment DashMyRoomsFragment on Query {\n  rooms(after: $first, first: $count, filter: {canEdit: true}) {\n    edges {\n      node {\n        id\n        name\n        active\n        debug\n        roomId\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "dc06e10a331a27f1a5904147ae650a71";
+(node as any).hash = "fc18a3a1a32649d6d9fd694500167a4c";
 
 export default node;

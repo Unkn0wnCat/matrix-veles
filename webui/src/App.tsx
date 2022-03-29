@@ -12,8 +12,8 @@ import {useTranslation} from "react-i18next";
 import {
     useQueryLoader, useRelayEnvironment,
 } from 'react-relay/hooks';
-import Dashboard from "./components/dashboard/Dashboard";
-import DashboardQueryGraphql, {DashboardQuery} from "./components/dashboard/__generated__/DashboardQuery.graphql";
+import Dashboard from "./components/panel/dashboard/Dashboard";
+import DashboardQueryGraphql, {DashboardQuery} from "./components/panel/dashboard/__generated__/DashboardQuery.graphql";
 
 function App() {
     const dispatch = useAppDispatch()
@@ -52,15 +52,16 @@ function App() {
                 <Route path={"register"} element={<RegisterView/>} />
             </Route>
             <Route path={"/"} element={<PanelLayout/>}>
-                <Route path={""} element={<RequireAuth>{/*<h1><Trans i18nKey={"test"}>Test</Trans></h1> <button onClick={() => {
-                    dispatch(logOut())
-                }
-                }>Log out</button> <p>{
-                    JSON.stringify(data.self)
-                }</p>*/}{dashboardInitialState && <Dashboard initialQueryRef={dashboardInitialState}/>}</RequireAuth>} />
-                <Route path={"rooms"} element={<RequireAuth><h1>rooms</h1></RequireAuth>} />
-                <Route path={"hashing/lists"} element={<RequireAuth><h1>lists</h1></RequireAuth>} />
-                <Route path={"hashing/entries"} element={<RequireAuth><h1>entries</h1></RequireAuth>} />
+                <Route path={""} element={<RequireAuth>{dashboardInitialState && <Dashboard initialQueryRef={dashboardInitialState}/>}</RequireAuth>} />
+                <Route path={"rooms"} element={<RequireAuth><h1>rooms</h1></RequireAuth>}>
+                    <Route path={":id"} element={<h1>room detail</h1>} />
+                </Route>
+                <Route path={"hashing/lists"} element={<RequireAuth><h1>lists</h1></RequireAuth>}>
+                    <Route path={":id"} element={<h1>list detail</h1>} />
+                </Route>
+                <Route path={"hashing/entries"} element={<RequireAuth><h1>entries</h1></RequireAuth>}>
+                    <Route path={":id"} element={<h1>entry detail</h1>} />
+                </Route>
             </Route>
         </Routes>
     );

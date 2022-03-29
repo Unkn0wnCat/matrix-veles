@@ -26,7 +26,12 @@ html, body, #root {
   --veles-color-accent: #007300;
   --veles-color-error: #e3373e;
 
+  --veles-color-red: #e3373e;
+  --veles-color-blue: #37a7e3;
+  --veles-color-green: #5ce337;
+
   --veles-layout-padding: 20px;
+  --veles-layout-padding-inverse: -20px;
   --veles-layout-padding-slim: 10px;
   --veles-layout-padding-wide: 40px;
   --veles-layout-border-radius: 10px;
@@ -39,6 +44,12 @@ html, body, #root {
     --veles-color-border: #cccccc;
     --veles-color-surface: #00000008;
     --veles-color-accent: #007300;
+  }
+}
+
+h1, h2, h3, h4, h5, h6 {
+  &:first-child {
+    margin-top: 0;
   }
 }
 
