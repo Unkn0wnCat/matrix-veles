@@ -15,7 +15,7 @@ const PanelLayout = () => {
     const {t} = useTranslation()
     const outlet = useOutlet();
     const [hashingExpanded, setHashingExpanded] = useState(false)
-    const [sideNavExpanded, setSideNavExpanded] = useState(true)
+    const [sideNavExpanded, setSideNavExpanded] = useState(false)
 
     const dispatch = useAppDispatch()
 

@@ -1,6 +1,6 @@
 @import "../globals";
 
-$navBreakpoint: 1000px;
+$navBreakpoint: 650px;
 
 .skipToContent {
   opacity: 0;
@@ -69,11 +69,13 @@ $navBreakpoint: 1000px;
       display: none;
     }
 
-    @media(max-width: 600px) {
+    @media(max-width: $navBreakpoint) {
       .hamburger {
         display: block;
       }
+    }
 
+    @media(max-width: 600px) {
       >*>span {
         display: none;
       }
