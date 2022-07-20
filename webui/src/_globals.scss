@@ -1,0 +1,21 @@
+@mixin badges {
+  .badge {
+    padding: 2px var(--veles-layout-padding-slim);
+    background-color: var(--veles-color-surface);
+    border-radius: var(--veles-layout-border-radius);
+    margin-left: 10px;
+    border: thin solid var(--veles-color-border);
+
+    &.red {
+      border-color: var(--veles-color-red);
+    }
+
+    &.blue {
+      border-color: var(--veles-color-blue);
+    }
+
+    &.green {
+      border-color: var(--veles-color-green);
+    }
+  }
+}

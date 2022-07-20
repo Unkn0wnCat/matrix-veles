@@ -47,9 +47,9 @@ const DashMyRooms = (props: Props) => {
                         return <Link className={styles.room} key={edge.node.id} to={"/rooms/"+edge.node.id}>
                             <div className={styles.nameRow}>
                                 <span className={styles.name}>{edge.node.name}</span>
-                                {edge.node.debug && <span className={styles.badge + " " + styles.blue}>Debug</span>}
-                                {!edge.node.active && <span className={styles.badge + " " + styles.red}>Inactive</span>}
-                                {edge.node.active && <span className={styles.badge + " " + styles.green}>Active</span>}
+                                {edge.node.debug && <span className={styles.badge + " " + styles.blue}><Trans i18nKey={"rooms.debug"}>Debug</Trans></span>}
+                                {!edge.node.active && <span className={styles.badge + " " + styles.red}><Trans i18nKey={"rooms.inactive"}>Inactive</Trans></span>}
+                                {edge.node.active && <span className={styles.badge + " " + styles.green}><Trans i18nKey={"rooms.active"}>Active</Trans></span>}
                             </div>
                             <span className={styles.id}>{edge.node.roomId}</span>
                         </Link>

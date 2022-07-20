@@ -14,6 +14,8 @@ import {
 } from 'react-relay/hooks';
 import Dashboard from "./components/panel/dashboard/Dashboard";
 import DashboardQueryGraphql, {DashboardQuery} from "./components/panel/dashboard/__generated__/DashboardQuery.graphql";
+import Rooms from "./components/panel/rooms/Rooms";
+import RoomsQueryGraphql, {RoomsQuery} from "./components/panel/rooms/__generated__/RoomsQuery.graphql";
 
 function App() {
     const dispatch = useAppDispatch()
@@ -23,6 +25,10 @@ function App() {
 
     const [dashboardInitialState, loadQuery, disposeQuery] = useQueryLoader<DashboardQuery>(
             DashboardQueryGraphql
+    )
+
+    const [roomsInitialState, loadRoomsQuery, disposeRoomsQuery] = useQueryLoader<RoomsQuery>(
+            RoomsQueryGraphql
     )
 
     // This needs to be here to prevent a weird bug
@@ -37,10 +43,12 @@ function App() {
     useEffect(() => {
         if(auth.jwt !== null) {
             loadQuery({})
+            loadRoomsQuery({})
             return
         }
 
         disposeQuery()
+        disposeRoomsQuery()
         environment.getStore().notify(undefined, true)
     }, [auth])
 
@@ -53,7 +61,7 @@ function App() {
             </Route>
             <Route path={"/"} element={<PanelLayout/>}>
                 <Route path={""} element={<RequireAuth>{dashboardInitialState && <Dashboard initialQueryRef={dashboardInitialState}/>}</RequireAuth>} />
-                <Route path={"rooms"} element={<RequireAuth><h1>rooms</h1></RequireAuth>}>
+                <Route path={"rooms"} element={<RequireAuth>{roomsInitialState && <Rooms initialQueryRef={roomsInitialState}/>}</RequireAuth>}>
                     <Route path={":id"} element={<h1>room detail</h1>} />
                 </Route>
                 <Route path={"hashing/lists"} element={<RequireAuth><h1>lists</h1></RequireAuth>}>
