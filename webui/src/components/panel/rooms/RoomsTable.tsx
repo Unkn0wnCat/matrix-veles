@@ -2,7 +2,6 @@ import React from "react";
 import {usePaginationFragment} from "react-relay/hooks";
 import {graphql} from "babel-plugin-relay/macro";
 import {RoomsTableFragment$key} from "./__generated__/RoomsTableFragment.graphql";
-import {useTable} from "react-table";
 import styles from "./RoomsTable.module.scss";
 import {useNavigate} from "react-router-dom";
 import {Trans} from "react-i18next";
