@@ -244,6 +244,7 @@ type Query {
     rooms(first: Int, after: String, filter: RoomFilter): RoomConnection @loggedIn
 
 
+    room(id: ID): Room @loggedIn
     user(id: ID, username: String): User @loggedIn
     entry(id: ID, hashValue: String): Entry @loggedIn
     list(id: ID, name: String): List @loggedIn

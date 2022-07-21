@@ -13,5 +13,14 @@
     "my_rooms": {
       "title": "Meine Räume"
     }
+  },
+  "rooms": {
+    "debug": "Debug",
+    "inactive": "Inaktiv",
+    "active": "Aktiv",
+    "title": "Meine Räume",
+    "details": "Details",
+    "name": "Name",
+    "id": "ID"
   }
 }

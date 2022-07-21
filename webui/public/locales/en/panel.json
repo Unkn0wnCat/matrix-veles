@@ -2,6 +2,7 @@
   "jump_to_content": "Jump to Content",
   "jump_to_navigation": "Jump to Navigation",
   "documentation": "Documentation",
+  "logout": "Logout",
   "navigation": {
     "dashboard": "Dashboard",
     "rooms": "My Rooms",

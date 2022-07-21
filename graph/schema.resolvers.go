@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
 	"math/big"
 	"strings"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// Author is the resolver for the author field.
 func (r *commentResolver) Author(ctx context.Context, obj *model.Comment) (*model.User, error) {
 	user, err := db.GetUserByID(*obj.AuthorID)
 	if err != nil {
@@ -36,6 +38,7 @@ func (r *commentResolver) Author(ctx context.Context, obj *model.Comment) (*mode
 	return model.MakeUser(user), nil
 }
 
+// PartOf is the resolver for the partOf field.
 func (r *entryResolver) PartOf(ctx context.Context, obj *model.Entry, first *int, after *string) (*model.ListConnection, error) {
 	ids := obj.PartOfIDs
 
@@ -112,6 +115,7 @@ func (r *entryResolver) PartOf(ctx context.Context, obj *model.Entry, first *int
 	}, nil
 }
 
+// AddedBy is the resolver for the addedBy field.
 func (r *entryResolver) AddedBy(ctx context.Context, obj *model.Entry) (*model.User, error) {
 	user, err := db.GetUserByID(obj.AddedByID)
 	if err != nil {
@@ -125,12 +129,14 @@ func (r *entryResolver) AddedBy(ctx context.Context, obj *model.Entry) (*model.U
 	return model.MakeUser(user), nil
 }
 
+// Comments is the resolver for the comments field.
 func (r *entryResolver) Comments(ctx context.Context, obj *model.Entry, first *int, after *string) (*model.CommentConnection, error) {
 	comments := obj.RawComments
 
 	return ResolveComments(comments, first, after)
 }
 
+// Creator is the resolver for the creator field.
 func (r *listResolver) Creator(ctx context.Context, obj *model.List) (*model.User, error) {
 	user, err := db.GetUserByID(obj.CreatorID)
 	if err != nil {
@@ -140,12 +146,14 @@ func (r *listResolver) Creator(ctx context.Context, obj *model.List) (*model.Use
 	return model.MakeUser(user), nil
 }
 
+// Comments is the resolver for the comments field.
 func (r *listResolver) Comments(ctx context.Context, obj *model.List, first *int, after *string) (*model.CommentConnection, error) {
 	comments := obj.RawComments
 
 	return ResolveComments(comments, first, after)
 }
 
+// Maintainers is the resolver for the maintainers field.
 func (r *listResolver) Maintainers(ctx context.Context, obj *model.List, first *int, after *string) (*model.UserConnection, error) {
 	ids := obj.MaintainerIDs
 
@@ -222,6 +230,7 @@ func (r *listResolver) Maintainers(ctx context.Context, obj *model.List, first *
 	}, nil
 }
 
+// Entries is the resolver for the entries field.
 func (r *listResolver) Entries(ctx context.Context, obj *model.List, first *int, after *string) (*model.EntryConnection, error) {
 	coll := db.Db.Collection(viper.GetString("bot.mongo.collection.entries"))
 
@@ -299,6 +308,7 @@ func (r *listResolver) Entries(ctx context.Context, obj *model.List, first *int,
 	}, nil
 }
 
+// Login is the resolver for the login field.
 func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string, error) {
 	user, err := db.GetUserByUsername(input.Username)
 	if err != nil {
@@ -336,6 +346,7 @@ func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string
 	return ss, nil
 }
 
+// Register is the resolver for the register field.
 func (r *mutationResolver) Register(ctx context.Context, input model.Register) (string, error) {
 	_, err := db.GetUserByUsername(input.Username)
 	if !errors.Is(err, mongo.ErrNoDocuments) {
@@ -381,6 +392,7 @@ func (r *mutationResolver) Register(ctx context.Context, input model.Register) (
 	return ss, nil
 }
 
+// AddMxid is the resolver for the addMXID field.
 func (r *mutationResolver) AddMxid(ctx context.Context, input model.AddMxid) (*model.User, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {
@@ -403,6 +415,7 @@ func (r *mutationResolver) AddMxid(ctx context.Context, input model.AddMxid) (*m
 	return model.MakeUser(user), nil
 }
 
+// RemoveMxid is the resolver for the removeMXID field.
 func (r *mutationResolver) RemoveMxid(ctx context.Context, input model.RemoveMxid) (*model.User, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {
@@ -429,6 +442,7 @@ func (r *mutationResolver) RemoveMxid(ctx context.Context, input model.RemoveMxi
 	return model.MakeUser(user), nil
 }
 
+// ReconfigureRoom is the resolver for the reconfigureRoom field.
 func (r *mutationResolver) ReconfigureRoom(ctx context.Context, input model.RoomConfigUpdate) (*model.Room, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {
@@ -499,6 +513,7 @@ func (r *mutationResolver) ReconfigureRoom(ctx context.Context, input model.Room
 	return model.MakeRoom(rConfig), nil
 }
 
+// SubscribeToList is the resolver for the subscribeToList field.
 func (r *mutationResolver) SubscribeToList(ctx context.Context, input model.ListSubscriptionUpdate) (*model.Room, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {
@@ -558,6 +573,7 @@ func (r *mutationResolver) SubscribeToList(ctx context.Context, input model.List
 	return model.MakeRoom(rConfig), nil
 }
 
+// UnsubscribeFromList is the resolver for the unsubscribeFromList field.
 func (r *mutationResolver) UnsubscribeFromList(ctx context.Context, input model.ListSubscriptionUpdate) (*model.Room, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {
@@ -616,6 +632,7 @@ func (r *mutationResolver) UnsubscribeFromList(ctx context.Context, input model.
 	return model.MakeRoom(rConfig), nil
 }
 
+// CreateEntry is the resolver for the createEntry field.
 func (r *mutationResolver) CreateEntry(ctx context.Context, input model.CreateEntry) (*model.Entry, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {
@@ -666,6 +683,7 @@ func (r *mutationResolver) CreateEntry(ctx context.Context, input model.CreateEn
 	return model.MakeEntry(entry), nil
 }
 
+// CommentEntry is the resolver for the commentEntry field.
 func (r *mutationResolver) CommentEntry(ctx context.Context, input model.CommentEntry) (*model.Entry, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {
@@ -699,6 +717,7 @@ func (r *mutationResolver) CommentEntry(ctx context.Context, input model.Comment
 	return model.MakeEntry(entry), nil
 }
 
+// AddToLists is the resolver for the addToLists field.
 func (r *mutationResolver) AddToLists(ctx context.Context, input model.AddToLists) (*model.Entry, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {
@@ -738,6 +757,7 @@ func (r *mutationResolver) AddToLists(ctx context.Context, input model.AddToList
 	return model.MakeEntry(entry), nil
 }
 
+// RemoveFromLists is the resolver for the removeFromLists field.
 func (r *mutationResolver) RemoveFromLists(ctx context.Context, input model.RemoveFromLists) (*model.Entry, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {
@@ -777,6 +797,7 @@ func (r *mutationResolver) RemoveFromLists(ctx context.Context, input model.Remo
 	return model.MakeEntry(entry), nil
 }
 
+// CreateList is the resolver for the createList field.
 func (r *mutationResolver) CreateList(ctx context.Context, input model.CreateList) (*model.List, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {
@@ -829,6 +850,7 @@ func (r *mutationResolver) CreateList(ctx context.Context, input model.CreateLis
 	return model.MakeList(&list), nil
 }
 
+// CommentList is the resolver for the commentList field.
 func (r *mutationResolver) CommentList(ctx context.Context, input model.CommentList) (*model.List, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {
@@ -862,10 +884,12 @@ func (r *mutationResolver) CommentList(ctx context.Context, input model.CommentL
 	return model.MakeList(list), nil
 }
 
+// DeleteList is the resolver for the deleteList field.
 func (r *mutationResolver) DeleteList(ctx context.Context, input string) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
+// Users is the resolver for the users field.
 func (r *queryResolver) Users(ctx context.Context, first *int, after *string, filter *model.UserFilter, sort *model.UserSort) (*model.UserConnection, error) {
 	dbFilter, dbSort, dbLimit, err := buildDBUserFilter(first, after, filter, sort)
 	if err != nil {
@@ -940,6 +964,7 @@ func (r *queryResolver) Users(ctx context.Context, first *int, after *string, fi
 	}, nil
 }
 
+// Lists is the resolver for the lists field.
 func (r *queryResolver) Lists(ctx context.Context, first *int, after *string, filter *model.ListFilter, sort *model.ListSort) (*model.ListConnection, error) {
 	dbFilter, dbSort, dbLimit, err := buildDBListFilter(first, after, filter, sort)
 	if err != nil {
@@ -1014,6 +1039,7 @@ func (r *queryResolver) Lists(ctx context.Context, first *int, after *string, fi
 	}, nil
 }
 
+// Entries is the resolver for the entries field.
 func (r *queryResolver) Entries(ctx context.Context, first *int, after *string, filter *model.EntryFilter, sort *model.EntrySort) (*model.EntryConnection, error) {
 	dbFilter, dbSort, dbLimit, err := buildDBEntryFilter(first, after, filter, sort)
 	if err != nil {
@@ -1088,6 +1114,7 @@ func (r *queryResolver) Entries(ctx context.Context, first *int, after *string, 
 	}, nil
 }
 
+// Rooms is the resolver for the rooms field.
 func (r *queryResolver) Rooms(ctx context.Context, first *int, after *string, filter *model.RoomFilter) (*model.RoomConnection, error) {
 	user, _ := GetUserFromContext(ctx)
 
@@ -1172,6 +1199,39 @@ func (r *queryResolver) Rooms(ctx context.Context, first *int, after *string, fi
 	}, nil
 }
 
+// Room is the resolver for the room field.
+func (r *queryResolver) Room(ctx context.Context, id *string) (*model.Room, error) {
+	if id != nil {
+		dbId, err := primitive.ObjectIDFromHex(*id)
+		if err != nil {
+			return nil, err
+		}
+
+		coll := db.Db.Collection(viper.GetString("bot.mongo.collection.rooms"))
+
+		res := coll.FindOne(ctx, bson.M{"_id": dbId})
+		if res.Err() != nil {
+			if errors.Is(res.Err(), mongo.ErrNoDocuments) {
+				return nil, errors.New("not found")
+			}
+
+			return nil, errors.New("database error")
+		}
+
+		var room config.RoomConfig
+
+		err = res.Decode(&room)
+		if err != nil {
+			return nil, errors.New("database error")
+		}
+
+		return model.MakeRoom(&room), nil
+	}
+
+	return nil, errors.New("not found")
+}
+
+// User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, id *string, username *string) (*model.User, error) {
 	if id != nil {
 		dbId, err := primitive.ObjectIDFromHex(*id)
@@ -1207,6 +1267,7 @@ func (r *queryResolver) User(ctx context.Context, id *string, username *string) 
 	return nil, errors.New("not found")
 }
 
+// Entry is the resolver for the entry field.
 func (r *queryResolver) Entry(ctx context.Context, id *string, hashValue *string) (*model.Entry, error) {
 	if id != nil {
 		dbId, err := primitive.ObjectIDFromHex(*id)
@@ -1242,6 +1303,7 @@ func (r *queryResolver) Entry(ctx context.Context, id *string, hashValue *string
 	return nil, errors.New("not found")
 }
 
+// List is the resolver for the list field.
 func (r *queryResolver) List(ctx context.Context, id *string, name *string) (*model.List, error) {
 	if id != nil {
 		dbId, err := primitive.ObjectIDFromHex(*id)
@@ -1277,6 +1339,7 @@ func (r *queryResolver) List(ctx context.Context, id *string, name *string) (*mo
 	return nil, errors.New("not found")
 }
 
+// Self is the resolver for the self field.
 func (r *queryResolver) Self(ctx context.Context) (*model.User, error) {
 	user, err := GetUserFromContext(ctx)
 	if err != nil {

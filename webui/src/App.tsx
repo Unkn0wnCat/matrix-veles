@@ -16,6 +16,8 @@ import Dashboard from "./components/panel/dashboard/Dashboard";
 import DashboardQueryGraphql, {DashboardQuery} from "./components/panel/dashboard/__generated__/DashboardQuery.graphql";
 import Rooms from "./components/panel/rooms/Rooms";
 import RoomsQueryGraphql, {RoomsQuery} from "./components/panel/rooms/__generated__/RoomsQuery.graphql";
+import RoomDetailQueryGraphql, {RoomDetailQuery} from "./components/panel/rooms/__generated__/RoomDetailQuery.graphql";
+import RoomDetail from "./components/panel/rooms/RoomDetail";
 
 function App() {
     const dispatch = useAppDispatch()
@@ -29,6 +31,10 @@ function App() {
 
     const [roomsInitialState, loadRoomsQuery, disposeRoomsQuery] = useQueryLoader<RoomsQuery>(
             RoomsQueryGraphql
+    )
+
+    const [roomDetailInitialState, loadRoomDetailQuery, disposeRoomDetailQuery] = useQueryLoader<RoomDetailQuery>(
+            RoomDetailQueryGraphql
     )
 
     // This needs to be here to prevent a weird bug
@@ -62,7 +68,7 @@ function App() {
             <Route path={"/"} element={<PanelLayout/>}>
                 <Route path={""} element={<RequireAuth>{dashboardInitialState && <Dashboard initialQueryRef={dashboardInitialState}/>}</RequireAuth>} />
                 <Route path={"rooms"} element={<RequireAuth>{roomsInitialState && <Rooms initialQueryRef={roomsInitialState}/>}</RequireAuth>}>
-                    <Route path={":id"} element={<h1>room detail</h1>} />
+                    <Route path={":id"} element={<RequireAuth><RoomDetail initialQueryRef={roomDetailInitialState} fetch={loadRoomDetailQuery} dispose={disposeRoomDetailQuery}/></RequireAuth>} />
                 </Route>
                 <Route path={"hashing/lists"} element={<RequireAuth><h1>lists</h1></RequireAuth>}>
                     <Route path={":id"} element={<h1>list detail</h1>} />
