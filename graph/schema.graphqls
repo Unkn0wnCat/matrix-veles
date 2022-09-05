@@ -46,6 +46,7 @@ type HashCheckerConfig {
 type Room {
     id: ID!
     active: Boolean!
+    deactivated: Boolean!
     name: String!
     roomId: String!
     debug: Boolean!
@@ -308,6 +309,7 @@ input RemoveMXID {
 
 input RoomConfigUpdate {
     id: ID!
+    deactivate: Boolean
     debug: Boolean
     adminPowerLevel: Int
     hashChecker: HashCheckerConfigUpdate

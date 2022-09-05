@@ -152,6 +152,7 @@ type ComplexityRoot struct {
 	Room struct {
 		Active            func(childComplexity int) int
 		AdminPowerLevel   func(childComplexity int) int
+		Deactivated       func(childComplexity int) int
 		Debug             func(childComplexity int) int
 		HashCheckerConfig func(childComplexity int) int
 		ID                func(childComplexity int) int
@@ -808,6 +809,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Room.AdminPowerLevel(childComplexity), true
 
+	case "Room.deactivated":
+		if e.complexity.Room.Deactivated == nil {
+			break
+		}
+
+		return e.complexity.Room.Deactivated(childComplexity), true
+
 	case "Room.debug":
 		if e.complexity.Room.Debug == nil {
 			break
@@ -1079,6 +1087,7 @@ type HashCheckerConfig {
 type Room {
     id: ID!
     active: Boolean!
+    deactivated: Boolean!
     name: String!
     roomId: String!
     debug: Boolean!
@@ -1341,6 +1350,7 @@ input RemoveMXID {
 
 input RoomConfigUpdate {
     id: ID!
+    deactivate: Boolean
     debug: Boolean
     adminPowerLevel: Int
     hashChecker: HashCheckerConfigUpdate
@@ -3995,6 +4005,8 @@ func (ec *executionContext) fieldContext_Mutation_reconfigureRoom(ctx context.Co
 				return ec.fieldContext_Room_id(ctx, field)
 			case "active":
 				return ec.fieldContext_Room_active(ctx, field)
+			case "deactivated":
+				return ec.fieldContext_Room_deactivated(ctx, field)
 			case "name":
 				return ec.fieldContext_Room_name(ctx, field)
 			case "roomId":
@@ -4086,6 +4098,8 @@ func (ec *executionContext) fieldContext_Mutation_subscribeToList(ctx context.Co
 				return ec.fieldContext_Room_id(ctx, field)
 			case "active":
 				return ec.fieldContext_Room_active(ctx, field)
+			case "deactivated":
+				return ec.fieldContext_Room_deactivated(ctx, field)
 			case "name":
 				return ec.fieldContext_Room_name(ctx, field)
 			case "roomId":
@@ -4177,6 +4191,8 @@ func (ec *executionContext) fieldContext_Mutation_unsubscribeFromList(ctx contex
 				return ec.fieldContext_Room_id(ctx, field)
 			case "active":
 				return ec.fieldContext_Room_active(ctx, field)
+			case "deactivated":
+				return ec.fieldContext_Room_deactivated(ctx, field)
 			case "name":
 				return ec.fieldContext_Room_name(ctx, field)
 			case "roomId":
@@ -5380,6 +5396,8 @@ func (ec *executionContext) fieldContext_Query_room(ctx context.Context, field g
 				return ec.fieldContext_Room_id(ctx, field)
 			case "active":
 				return ec.fieldContext_Room_active(ctx, field)
+			case "deactivated":
+				return ec.fieldContext_Room_deactivated(ctx, field)
 			case "name":
 				return ec.fieldContext_Room_name(ctx, field)
 			case "roomId":
@@ -5958,6 +5976,50 @@ func (ec *executionContext) fieldContext_Room_active(ctx context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Room_deactivated(ctx context.Context, field graphql.CollectedField, obj *model.Room) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Room_deactivated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Deactivated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Room_deactivated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Room",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Room_name(ctx context.Context, field graphql.CollectedField, obj *model.Room) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Room_name(ctx, field)
 	if err != nil {
@@ -6333,6 +6395,8 @@ func (ec *executionContext) fieldContext_RoomEdge_node(ctx context.Context, fiel
 				return ec.fieldContext_Room_id(ctx, field)
 			case "active":
 				return ec.fieldContext_Room_active(ctx, field)
+			case "deactivated":
+				return ec.fieldContext_Room_deactivated(ctx, field)
 			case "name":
 				return ec.fieldContext_Room_name(ctx, field)
 			case "roomId":
@@ -9437,7 +9501,7 @@ func (ec *executionContext) unmarshalInputRoomConfigUpdate(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "debug", "adminPowerLevel", "hashChecker"}
+	fieldsInOrder := [...]string{"id", "deactivate", "debug", "adminPowerLevel", "hashChecker"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9449,6 +9513,14 @@ func (ec *executionContext) unmarshalInputRoomConfigUpdate(ctx context.Context, 
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "deactivate":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deactivate"))
+			it.Deactivate, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10806,6 +10878,13 @@ func (ec *executionContext) _Room(ctx context.Context, sel ast.SelectionSet, obj
 		case "active":
 
 			out.Values[i] = ec._Room_active(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deactivated":
+
+			out.Values[i] = ec._Room_deactivated(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++

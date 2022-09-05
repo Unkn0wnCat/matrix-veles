@@ -29,6 +29,9 @@ type RoomConfig struct {
 	// Active tells if the bot is active in this room (Set to false on leave/kick/ban)
 	Active bool `yaml:"active" bson:"active"`
 
+	// Deactivate can be set by an admin to disable the bot for a room
+	Deactivate bool `yaml:"deactivate" bson:"deactivate"`
+
 	// Name is fetched regularly from the room state
 	Name string `yaml:"name" bson:"name"`
 

@@ -164,6 +164,7 @@ type RemoveMxid struct {
 
 type RoomConfigUpdate struct {
 	ID              string                   `json:"id"`
+	Deactivate      *bool                    `json:"deactivate"`
 	Debug           *bool                    `json:"debug"`
 	AdminPowerLevel *int                     `json:"adminPowerLevel"`
 	HashChecker     *HashCheckerConfigUpdate `json:"hashChecker"`

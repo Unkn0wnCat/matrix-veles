@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<58fc708823f0e42ade18c16f92c3b0d2>>
+ * @generated SignedSource<<c6a0a35dc80ab80f3fc8e42c6fe8a0f6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -8,30 +8,41 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import { ConcreteRequest, Query } from 'relay-runtime';
+import { ConcreteRequest, Mutation } from 'relay-runtime';
 export type HashCheckerMode = "NOTICE" | "DELETE" | "MUTE" | "BAN" | "%future added value";
-export type RoomDetailQuery$variables = {
-  id?: string | null;
+export type RoomConfigUpdate = {
+  id: string;
+  deactivate?: boolean | null;
+  debug?: boolean | null;
+  adminPowerLevel?: number | null;
+  hashChecker?: HashCheckerConfigUpdate | null;
 };
-export type RoomDetailQuery$data = {
-  readonly room: {
+export type HashCheckerConfigUpdate = {
+  chatNotice?: boolean | null;
+  hashCheckMode?: HashCheckerMode | null;
+};
+export type ReconfigureRoomMutation$variables = {
+  reconfigureInput: RoomConfigUpdate;
+};
+export type ReconfigureRoomMutation$data = {
+  readonly reconfigureRoom: {
     readonly id: string;
     readonly active: boolean;
     readonly deactivated: boolean;
-    readonly adminPowerLevel: number;
-    readonly debug: boolean;
     readonly name: string;
     readonly roomId: string;
+    readonly debug: boolean;
+    readonly adminPowerLevel: number;
     readonly hashCheckerConfig: {
       readonly chatNotice: boolean;
       readonly hashCheckMode: HashCheckerMode;
       readonly subscribedLists: ReadonlyArray<string> | null;
     };
-  } | null;
+  };
 };
-export type RoomDetailQuery = {
-  variables: RoomDetailQuery$variables;
-  response: RoomDetailQuery$data;
+export type ReconfigureRoomMutation = {
+  variables: ReconfigureRoomMutation$variables;
+  response: ReconfigureRoomMutation$data;
 };
 
 const node: ConcreteRequest = (function(){
@@ -39,7 +50,7 @@ var v0 = [
   {
     "defaultValue": null,
     "kind": "LocalArgument",
-    "name": "id"
+    "name": "reconfigureInput"
   }
 ],
 v1 = [
@@ -48,13 +59,13 @@ v1 = [
     "args": [
       {
         "kind": "Variable",
-        "name": "id",
-        "variableName": "id"
+        "name": "input",
+        "variableName": "reconfigureInput"
       }
     ],
     "concreteType": "Room",
     "kind": "LinkedField",
-    "name": "room",
+    "name": "reconfigureRoom",
     "plural": false,
     "selections": [
       {
@@ -82,7 +93,14 @@ v1 = [
         "alias": null,
         "args": null,
         "kind": "ScalarField",
-        "name": "adminPowerLevel",
+        "name": "name",
+        "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "roomId",
         "storageKey": null
       },
       {
@@ -96,14 +114,7 @@ v1 = [
         "alias": null,
         "args": null,
         "kind": "ScalarField",
-        "name": "name",
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "roomId",
+        "name": "adminPowerLevel",
         "storageKey": null
       },
       {
@@ -147,29 +158,29 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "RoomDetailQuery",
+    "name": "ReconfigureRoomMutation",
     "selections": (v1/*: any*/),
-    "type": "Query",
+    "type": "Mutation",
     "abstractKey": null
   },
   "kind": "Request",
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "RoomDetailQuery",
+    "name": "ReconfigureRoomMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "397376ecc93b3b405d66d01b7fd4de21",
+    "cacheID": "4186d7d18c6230e79d890ca0043dc104",
     "id": null,
     "metadata": {},
-    "name": "RoomDetailQuery",
-    "operationKind": "query",
-    "text": "query RoomDetailQuery(\n  $id: ID\n) {\n  room(id: $id) {\n    id\n    active\n    deactivated\n    adminPowerLevel\n    debug\n    name\n    roomId\n    hashCheckerConfig {\n      chatNotice\n      hashCheckMode\n      subscribedLists\n    }\n  }\n}\n"
+    "name": "ReconfigureRoomMutation",
+    "operationKind": "mutation",
+    "text": "mutation ReconfigureRoomMutation(\n  $reconfigureInput: RoomConfigUpdate!\n) {\n  reconfigureRoom(input: $reconfigureInput) {\n    id\n    active\n    deactivated\n    name\n    roomId\n    debug\n    adminPowerLevel\n    hashCheckerConfig {\n      chatNotice\n      hashCheckMode\n      subscribedLists\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "338b222f1e379335edc6847c401f52f5";
+(node as any).hash = "e4ccf905922a56c92f44336d58c96a53";
 
 export default node;

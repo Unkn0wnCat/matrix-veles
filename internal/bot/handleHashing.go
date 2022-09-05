@@ -80,6 +80,12 @@ func handleHashing(content *event.MessageEventContent, evt *event.Event, matrixC
 	// Fetch room configuration for adjusting behaviour
 	roomConfig := config.GetRoomConfig(evt.RoomID.String())
 
+	if !roomConfig.Active || roomConfig.Deactivate {
+		rcSpan.End()
+		span.AddEvent("Room is deactivated, returning")
+		return
+	}
+
 	rcSpan.End()
 
 	defer filesProcessed.Inc()

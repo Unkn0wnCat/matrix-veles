@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
 	"math/big"
 	"strings"
 	"time"
@@ -19,6 +18,7 @@ import (
 	model2 "github.com/Unkn0wnCat/matrix-veles/internal/db/model"
 	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/viper"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -475,6 +475,10 @@ func (r *mutationResolver) ReconfigureRoom(ctx context.Context, input model.Room
 
 	if input.Debug != nil {
 		rConfig.Debug = *input.Debug
+	}
+
+	if input.Deactivate != nil {
+		rConfig.Deactivate = *input.Deactivate
 	}
 
 	if input.HashChecker != nil {

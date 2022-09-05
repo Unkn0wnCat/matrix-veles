@@ -1,0 +1,78 @@
+@import "../../globals";
+
+.toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  position: relative;
+  margin-bottom: 1em;
+  cursor: pointer;
+  gap: 1ch;
+
+  .toggleInput {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .toggleDisplay {
+    --offset: 0.25em;
+    --diameter: 1.8em;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-around;
+    box-sizing: content-box;
+    width: calc(var(--diameter) * 2 + var(--offset) * 2);
+    height: calc(var(--diameter) + var(--offset) * 2);
+    border: 0;
+    position: relative;
+    border-radius: var(--veles-layout-border-radius);
+    background-color: var(--veles-color-background);
+    transition: 250ms;
+
+    &::before {
+      content: "";
+      z-index: 2;
+      position: absolute;
+      top: 50%;
+      left: var(--offset);
+      box-sizing: border-box;
+      width: var(--diameter);
+      height: var(--diameter);
+      border: 0.1em solid rgb(0 0 0 / 0.2);
+      border-radius: var(--veles-layout-border-radius);
+      background-color: white;
+      transform: translate(0, -50%);
+      will-change: transform;
+      transition: inherit;
+    }
+  }
+
+  &:focus .toggleDisplay, .toggleInput:focus + .toggleDisplay {
+      outline: 2px solid var(--veles-color-accent);
+      outline: 2px auto -webkit-focus-ring-color;
+      outline-offset: 2px;
+  }
+
+  &[disabled] .toggleDisplay,
+  .toggleInput:disabled + .toggleDisplay {
+    opacity: 0.6;
+    filter: grayscale(40%);
+    cursor: not-allowed;
+  }
+
+  &:focus, &:focus:not(:focus-visible) .toggleDisplay, .toggleInput:focus:not(:focus-visible) + .toggleDisplay {
+    outline: none;
+  }
+
+  &[aria-pressed="true"] .toggleDisplay,
+  .toggleInput:checked + .toggleDisplay {
+    background-color: var(--veles-color-accent);
+
+    &::before {
+      transform: translate(100%, -50%);
+    }
+  }
+}
