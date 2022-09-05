@@ -9,9 +9,9 @@ import {logIn} from "../../features/auth/authSlice";
 
 import {Key} from "lucide-react";
 import {AuthLocationState} from "../../layouts/AuthLayout";
-import {Helmet} from "react-helmet";
 import {Trans, useTranslation} from "react-i18next";
 import LoginMutation from "../../mutations/LoginMutation";
+import Helmet from "react-helmet";
 
 const LoginView = () => {
     const [username, setUsername] = useState("");

@@ -6,7 +6,7 @@ import {ReactComponent as Logo} from "../../logo.svg";
 import {Link, useLocation} from "react-router-dom";
 import {AuthLocationState} from "../../layouts/AuthLayout";
 import {useAppDispatch} from "../../app/hooks";
-import {Helmet} from "react-helmet";
+import Helmet from "react-helmet";
 import {Trans, useTranslation} from "react-i18next";
 import {logIn} from "../../features/auth/authSlice";
 import RegisterMutation from "../../mutations/RegisterMutation";
