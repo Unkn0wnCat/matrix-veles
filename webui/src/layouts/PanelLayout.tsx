@@ -10,6 +10,7 @@ import styles from "./PanelLayout.module.scss";
 import {Trans, useTranslation} from "react-i18next";
 import {useAppDispatch} from "../app/hooks";
 import {logOut} from "../features/auth/authSlice";
+import {LoaderSuspense} from "../components/common/Loader";
 
 const PanelLayout = () => {
     const {t} = useTranslation()
@@ -44,9 +45,9 @@ const PanelLayout = () => {
                 </div>
             </nav>
             <main id={"main"}>
-                <React.Suspense fallback={<span>Fetching data...</span>}>
+                <LoaderSuspense>
                     {outlet}
-                </React.Suspense>
+                </LoaderSuspense>
             </main>
         </div>
     </div>

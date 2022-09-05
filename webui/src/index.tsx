@@ -12,17 +12,18 @@ import {
 
 import "./i18n";
 import RelayEnvironment from "./RelayEnvironment";
+import {LoaderSuspense} from "./components/common/Loader";
 
 
 ReactDOM.render(
     <React.StrictMode>
         <Provider store={store}>
             <RelayEnvironmentProvider environment={RelayEnvironment({store})}>
-                <React.Suspense fallback={<h1>Loading...</h1>}>
+                <LoaderSuspense>
                     <BrowserRouter>
                         <App />
                     </BrowserRouter>
-                </React.Suspense>
+                </LoaderSuspense>
             </RelayEnvironmentProvider>
         </Provider>
     </React.StrictMode>,

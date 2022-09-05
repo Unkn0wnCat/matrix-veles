@@ -41,7 +41,7 @@ const RoomsTable = ({initialQueryRef}: Props) => {
             <tbody>
             {
                 data.rooms?.edges.map((edge) => {
-                    return <tr onClick={() => {navigate("/rooms/"+edge.node.id)}}>
+                    return <tr onClick={() => {navigate("/rooms/"+edge.node.id)}} key={edge.node.id}>
                         <td>
                             {edge.node.debug && <span className={styles.badge + " " + styles.blue}><Trans i18nKey={"rooms.debug"}>Debug</Trans></span>}
                             {!edge.node.active && <span className={styles.badge + " " + styles.red}><Trans i18nKey={"rooms.inactive"}>Inactive</Trans></span>}

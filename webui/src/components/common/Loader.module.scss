@@ -1,0 +1,33 @@
+@import "../../globals";
+
+.loader {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+
+  > svg {
+    animation-name: spinny-spin;
+    animation-duration: 2s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+
+    width: 80px;
+    height: 80px;
+
+    stroke-width: 1.5px;
+  }
+
+  > span {
+    margin-top: var(--veles-layout-padding);
+    font-size: 1.5em;
+  }
+}
+
+@keyframes spinny-spin {
+  0% {transform: rotate(0turn)}
+  100% {transform: rotate(1turn)}
+}

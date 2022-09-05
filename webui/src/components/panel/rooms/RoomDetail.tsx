@@ -1,9 +1,10 @@
-import React, {useEffect} from "react";
+import React, {useContext, useEffect} from "react";
 import {PreloadedQuery, usePreloadedQuery} from "react-relay/hooks";
 import {graphql} from "babel-plugin-relay/macro";
 import {RoomDetailQuery, RoomDetailQuery$variables} from "./__generated__/RoomDetailQuery.graphql";
 import {DisposeFn} from "relay-runtime";
 import {useParams} from "react-router-dom";
+import {RoomsSlideOverTitleContext} from "./Rooms";
 import ToggleButton from "../../form_components/ToggleButton";
 
 import styles from "./RoomDetail.module.scss";
@@ -46,20 +47,21 @@ const RoomDetailInner = ({initialQueryRef}: PropsFinal) => {
             initialQueryRef
     )
 
+    const titleSetContext = useContext(RoomsSlideOverTitleContext)
+
+    titleSetContext && data.room?.name && titleSetContext(data.room.name);
+
     return <>
-        <span className={styles.title}>
-            <h1>{data.room?.name}</h1>
-            <ToggleButton name={"activeSwitch"} label={"Activate"} labelSrOnly={true} onChange={(ev) => {
-                reconfigureRoom({
-                    variables: {
-                        reconfigureInput: {
-                            id: data.room?.id!,
-                            deactivate: !ev.currentTarget.checked
-                        }
+        <ToggleButton name={"activeSwitch"} label={"Activate Room"} labelSrOnly={false} onChange={(ev) => {
+            reconfigureRoom({
+                variables: {
+                    reconfigureInput: {
+                        id: data.room?.id!,
+                        deactivate: !ev.currentTarget.checked
                     }
-                })
-            }} disabled={reconfiguringRoom || ((data.room || false) && !data.room.active && !data.room.deactivated)} checked={data.room?.active}/>
-        </span>
+                }
+            })
+        }} disabled={reconfiguringRoom || ((data.room || false) && !data.room.active && !data.room.deactivated)} checked={data.room?.active}/>
 
 
         <pre>{JSON.stringify(data, null, 2)}</pre>
@@ -77,7 +79,7 @@ const RoomDetail = ({initialQueryRef, fetch, dispose}: Props) => {
         }
     }, [id, dispose, fetch])
 
-    return initialQueryRef ? <RoomDetailInner initialQueryRef={initialQueryRef} /> : <>loading...</>
+    return initialQueryRef ? <RoomDetailInner initialQueryRef={initialQueryRef} /> : null
 }
 
 export default RoomDetail;
