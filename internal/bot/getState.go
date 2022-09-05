@@ -36,7 +36,7 @@ type StateEventPowerLevelContent struct {
 // GetRoomPowerLevelState returns the rooms current power levels from the state
 func GetRoomPowerLevelState(matrixClient *mautrix.Client, roomId id.RoomID) (*StateEventPowerLevelContent, error) {
 	// https://matrix.example.com/_matrix/client/r0/rooms/<roomId.String()>/state
-	url := matrixClient.BuildURL("rooms", roomId.String(), "state")
+	url := matrixClient.BuildClientURL("r0", "rooms", roomId.String(), "state")
 
 	res, err := matrixClient.MakeRequest("GET", url, nil, nil)
 	if err != nil {
@@ -103,7 +103,7 @@ type StateEventRoomNameContent struct {
 
 func GetRoomNameState(matrixClient *mautrix.Client, roomId id.RoomID) (*StateEventRoomNameContent, error) {
 	// https://matrix.example.com/_matrix/client/r0/rooms/<roomId.String()>/state
-	url := matrixClient.BuildURL("rooms", roomId.String(), "state")
+	url := matrixClient.BuildClientURL("r0", "rooms", roomId.String(), "state")
 
 	res, err := matrixClient.MakeRequest("GET", url, nil, nil)
 	if err != nil {
