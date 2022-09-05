@@ -7,6 +7,9 @@ jobs:
     update:
         name: Build Site
         runs-on: ubuntu-latest
+        defaults:
+          run:
+            working-directory: webui 
 
         steps:
             - uses: actions/checkout@v3
@@ -16,8 +19,6 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: "17.x"
-
-            - run: cd webui
 
             - run: yarn
               name: Install Dependencies
