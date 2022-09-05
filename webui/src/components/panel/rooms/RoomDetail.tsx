@@ -7,7 +7,7 @@ import {useParams} from "react-router-dom";
 import {RoomsSlideOverTitleContext} from "./Rooms";
 import ToggleButton from "../../form_components/ToggleButton";
 
-import styles from "./RoomDetail.module.scss";
+//import styles from "./RoomDetail.module.scss";
 import {useReconfigureRoomMutation} from "../../../mutations/ReconfigureRoomMutation";
 
 type Props = {

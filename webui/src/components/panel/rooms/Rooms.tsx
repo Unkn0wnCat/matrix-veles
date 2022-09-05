@@ -1,4 +1,4 @@
-import React, {useContext, useState} from "react";
+import React, {useState} from "react";
 import {useNavigate, useOutlet} from "react-router-dom";
 
 import styles from "./Rooms.module.scss";
