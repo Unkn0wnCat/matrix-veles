@@ -7,9 +7,30 @@ on:
     branches: [ main ]
 
 jobs:
-
-  build:
+  build-webui:
+    name: Build WebUI
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+            node-version: "18.x"
+      - run: yarn
+        name: WebUI - Install Dependencies
+        working-directory: webui
+      - run: yarn build
+        name: WebUI - Build
+        working-directory: webui
+      - name: WebUI - Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: webui-dist
+          path: webui/build
+
+  build-backend:
+    runs-on: ubuntu-latest
+    needs: build-webui
     steps:
     - uses: actions/checkout@v2
 
@@ -17,19 +38,12 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: 1.17
-
-    - name: Use Node.js
-      uses: actions/setup-node@v3
+        
+    - name: Download WebUI build
+      uses: actions/download-artifact@v3
       with:
-          node-version: "18.x"
-
-    - run: yarn
-      name: WebUI - Install Dependencies
-      working-directory: webui
-
-    - run: yarn build
-      name: WebUI - Build
-      working-directory: webui
+        name: webui-dist
+        path: webui/build
 
     - name: Build with WebUI
       run: go build -tags withUI -v ./...
