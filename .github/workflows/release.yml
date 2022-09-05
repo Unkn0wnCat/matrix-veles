@@ -5,6 +5,26 @@ on:
     types: [published]
 
 jobs:
+  build-webui:
+    name: Build WebUI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+            node-version: "18.x"
+      - run: yarn
+        name: WebUI - Install Dependencies
+        working-directory: webui
+      - run: yarn build
+        name: WebUI - Build
+        working-directory: webui
+      - name: WebUI - Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: webui-dist
+          path: webui/build
   releases-matrix:
     name: Release Go Binary
     runs-on: ubuntu-latest
@@ -20,16 +40,11 @@ jobs:
             goos: windows
     steps:
       - uses: actions/checkout@v2
-      - name: Use Node.js
-        uses: actions/setup-node@v3
+      - name: Download WebUI build
+        uses: actions/download-artifact@v3
         with:
-            node-version: "18.x"
-      - run: yarn
-        name: WebUI - Install Dependencies
-        working-directory: webui
-      - run: yarn build
-        name: WebUI - Build
-        working-directory: webui
+          name: webui-dist
+          path: webui/build
       - uses: wangyoucao577/go-release-action@v1.30
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
