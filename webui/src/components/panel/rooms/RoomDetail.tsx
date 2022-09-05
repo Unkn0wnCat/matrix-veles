@@ -61,7 +61,18 @@ const RoomDetailInner = ({initialQueryRef}: PropsFinal) => {
                     }
                 }
             })
-        }} disabled={reconfiguringRoom || ((data.room || false) && !data.room.active && !data.room.deactivated)} checked={data.room?.active}/>
+        }} disabled={reconfiguringRoom || ((data.room || false) && !data.room.active && !data.room.deactivated)} checked={data.room?.active}/><br/>
+
+        <ToggleButton name={"debugSwitch"} label={"Debug-Mode"} labelSrOnly={false} onChange={(ev) => {
+            reconfigureRoom({
+                variables: {
+                    reconfigureInput: {
+                        id: data.room?.id!,
+                        debug: ev.currentTarget.checked
+                    }
+                }
+            })
+        }} disabled={reconfiguringRoom || (!data.room)} checked={data.room?.debug}/>
 
 
         <pre>{JSON.stringify(data, null, 2)}</pre>
