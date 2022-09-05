@@ -18,7 +18,23 @@ jobs:
       with:
         go-version: 1.17
 
-    - name: Build
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+          node-version: "18.x"
+
+    - run: yarn
+      name: WebUI - Install Dependencies
+      working-directory: webui
+
+    - run: yarn build
+      name: WebUI - Build
+      working-directory: webui
+
+    - name: Build with WebUI
+      run: go build -tags withUI -v ./...
+
+    - name: Build without WebUI
       run: go build -v ./...
 
     - name: Test

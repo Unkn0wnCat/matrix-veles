@@ -2,12 +2,14 @@ package web
 
 import (
 	"github.com/Unkn0wnCat/matrix-veles/internal/web/api"
+	"github.com/Unkn0wnCat/matrix-veles/webui"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -23,10 +25,25 @@ func StartServer() {
 
 	r.Handle("/metrics", promhttp.Handler())
 
-	r.HandleFunc("/", HomeHandler)
+	//r.HandleFunc("/", HomeHandler)
 	//r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
 	r.Mount("/api", api.SetupAPI())
+
+	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api") {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(404)
+			w.Write([]byte("{\"error_code\": 404, \"error\": \"not_found\"}"))
+			return
+		}
+		return
+	})
+
+	ui, err := webui.ServeUI()
+	if err == nil {
+		r.Mount("/", ui)
+	}
 
 	srv := &http.Server{
 		Handler:      r,
