@@ -6,7 +6,7 @@ import RegisterView from "./components/auth/RegisterView";
 import RequireAuth from "./features/auth/RequireAuth";
 import {useAppDispatch, useAppSelector} from "./app/hooks";
 import broadcastChannel from "./app/broadcastChannel";
-import {logOut, receiveAuthUpdate, selectAuth} from "./features/auth/authSlice";
+import {receiveAuthUpdate, selectAuth} from "./features/auth/authSlice";
 import PanelLayout from "./layouts/PanelLayout";
 import {useTranslation} from "react-i18next";
 import {
@@ -56,7 +56,7 @@ function App() {
         disposeQuery()
         disposeRoomsQuery()
         environment.getStore().notify(undefined, true)
-    }, [auth])
+    }, [auth, disposeQuery, disposeRoomsQuery, environment, loadQuery, loadRoomsQuery])
 
 
     return (

@@ -1,7 +1,7 @@
 import React from "react";
-import {PreloadedQuery, usePaginationFragment} from "react-relay/hooks";
+import {usePaginationFragment} from "react-relay/hooks";
 import {graphql} from "babel-plugin-relay/macro";
-import {Trans, useTranslation} from "react-i18next";
+import {Trans} from "react-i18next";
 import styles from "./DashMyLists.module.scss";
 import {Link} from "react-router-dom";
 import List from "../../List";
@@ -14,9 +14,9 @@ type Props = {
 }
 
 const DashMyLists = (props: Props) => {
-    const {t} = useTranslation()
+    //const {t} = useTranslation()
 
-    const {data, refetch, loadNext, hasNext, isLoadingNext} = usePaginationFragment<ComponentDashMyLists, DashMyListsFragment$key>(
+    const {data, loadNext, hasNext, isLoadingNext} = usePaginationFragment<ComponentDashMyLists, DashMyListsFragment$key>(
             graphql`
                 fragment DashMyListsFragment on Query @refetchable(queryName: "ComponentDashMyLists") {
                     lists(after: $first, first: $count) @connection(key: "ComponentDashMyLists_lists") {

@@ -16,7 +16,9 @@ export type GQLAuthObj = {
     auth?: string
 }
 
-export default (auth: GQLAuthObj) => new Environment({
+const RelayEnvironment = (auth: GQLAuthObj) => new Environment({
     network: Network.create(fetchRelay(auth)),
     store: new Store(new RecordSource()),
 });
+
+export default RelayEnvironment

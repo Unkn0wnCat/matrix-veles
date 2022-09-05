@@ -4,7 +4,7 @@ import {useNavigate, useOutlet} from "react-router-dom";
 import styles from "./Rooms.module.scss";
 import {Trans} from "react-i18next";
 import RoomsTable from "./RoomsTable";
-import {PreloadedQuery, usePreloadedQuery, useQueryLoader} from "react-relay/hooks";
+import {PreloadedQuery, usePreloadedQuery} from "react-relay/hooks";
 import {graphql} from "babel-plugin-relay/macro";
 import {RoomsQuery} from "./__generated__/RoomsQuery.graphql";
 import {X} from "lucide-react";

@@ -5,7 +5,7 @@ import {Link, useLocation, useNavigate, useOutlet} from "react-router-dom";
 import {UserPlus, User} from "lucide-react";
 
 import {ReactComponent as Logo} from "../logo.svg";
-import {useAppDispatch, useAppSelector} from "../app/hooks";
+import {useAppSelector} from "../app/hooks";
 import {selectAuth} from "../features/auth/authSlice";
 import {Trans} from "react-i18next";
 

@@ -1,8 +1,7 @@
-import React, {useCallback} from "react";
+import React from "react";
 import styles from "./List.module.scss";
 import {Box, Loader} from "lucide-react";
 import {Trans, useTranslation} from "react-i18next";
-import {Link} from "react-router-dom";
 import {LoadMoreFn} from "react-relay/relay-hooks/useLoadMoreFunction";
 
 type Props = {
@@ -17,7 +16,7 @@ const List = (props: Props) => {
     const {t} = useTranslation()
 
     return <div className={styles.list + (props.className ? " " + props.className :"")}>
-        {(!props.children || props.children.length == 0) && <span className={styles.eol}>
+        {(!props.children || props.children.length === 0) && <span className={styles.eol}>
                     <Box width={50} height={50} strokeWidth={1} strokeDasharray={"2px 4px"} /><br/>
                     <Trans i18nKey={"list.none"}>No entries</Trans>
                 </span>}

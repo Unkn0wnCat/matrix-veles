@@ -11,7 +11,7 @@ type Props = {
 }
 
 const RoomsTable = ({initialQueryRef}: Props) => {
-    const {data, refetch, loadNext, hasNext, isLoadingNext} = usePaginationFragment(graphql`
+    const {data} = usePaginationFragment(graphql`
         fragment RoomsTableFragment on Query @refetchable(queryName: "RoomsTableFragment") {
             rooms(after: $first, first: $count, filter: {canEdit: true}) @connection(key: "RoomsTableFragment_rooms") {
                 edges {

@@ -1,12 +1,10 @@
-import React, {useCallback} from "react";
+import React from "react";
 import {graphql} from "babel-plugin-relay/macro";
 
 
-import {PreloadedQuery, usePaginationFragment, usePreloadedQuery} from "react-relay/hooks";
+import {PreloadedQuery, usePreloadedQuery} from "react-relay/hooks";
 import {DashboardQuery} from "./__generated__/DashboardQuery.graphql";
 import {Trans} from "react-i18next";
-import {DashboardListsQuery} from "./__generated__/DashboardListsQuery.graphql";
-import {DashboardQueryLists$data, DashboardQueryLists$key} from "./__generated__/DashboardQueryLists.graphql";
 import DashMyRooms from "./DashMyRooms";
 import styles from "./Dashboard.module.scss";
 import DashMyLists from "./DashMyLists";

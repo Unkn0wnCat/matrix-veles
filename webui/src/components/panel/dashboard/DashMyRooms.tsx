@@ -1,13 +1,11 @@
 import React from "react";
-import {PreloadedQuery, usePaginationFragment} from "react-relay/hooks";
+import {usePaginationFragment} from "react-relay/hooks";
 import {graphql} from "babel-plugin-relay/macro";
-import {DashboardQuery} from "./__generated__/DashboardQuery.graphql";
 import {DashMyRoomsFragment$key} from "./__generated__/DashMyRoomsFragment.graphql";
 import {ComponentDashMyRooms} from "./__generated__/ComponentDashMyRooms.graphql";
-import {Trans, useTranslation} from "react-i18next";
+import {Trans} from "react-i18next";
 import styles from "./DashMyRooms.module.scss";
 import {Link} from "react-router-dom";
-import {Loader, Box} from "lucide-react";
 import List from "../../List";
 
 type Props = {
@@ -16,9 +14,9 @@ type Props = {
 }
 
 const DashMyRooms = (props: Props) => {
-    const {t} = useTranslation()
+    //const {t} = useTranslation()
 
-    const {data, refetch, loadNext, hasNext, isLoadingNext} = usePaginationFragment<ComponentDashMyRooms, DashMyRoomsFragment$key>(
+    const {data, loadNext, hasNext, isLoadingNext} = usePaginationFragment<ComponentDashMyRooms, DashMyRoomsFragment$key>(
             graphql`
                 fragment DashMyRoomsFragment on Query @refetchable(queryName: "ComponentDashMyRooms") {
                     rooms(after: $first, first: $count, filter: {canEdit: true}) @connection(key: "ComponentDashMyRooms_rooms") {
