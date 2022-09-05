@@ -1,0 +1,32 @@
+name: Build WebUI
+
+on:
+    push:
+
+jobs:
+    update:
+        name: Build Site
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v3
+              name: Checkout Repo
+
+            - name: Use Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "17.x"
+
+            - run: cd webui
+
+            - run: yarn
+              name: Install Dependencies
+
+            - run: yarn build
+              name: Build Site
+
+            #- uses: actions/upload-artifact@v3
+            #  name: Upload Artifacts
+            #  with:
+            #      name: site
+            #      path: public
