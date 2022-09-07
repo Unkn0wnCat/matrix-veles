@@ -13,7 +13,7 @@ async function fetchGraphQL(auth: GQLAuthObj, text: any, variables: any) {
         headers["Authorization"] = `Bearer ${auth.auth}`
     }
 
-    const response = await fetch('http://127.0.0.1:8123/api/query', {
+    const response = await fetch('/api/query', {
         method: 'POST',
         headers: headers,
         body: JSON.stringify({
