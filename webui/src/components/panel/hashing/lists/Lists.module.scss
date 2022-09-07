@@ -1,0 +1,77 @@
+@import "../../../../globals";
+
+$slideOverBreakpoint: 1000px;
+
+.roomsContainer {
+  display: flex;
+  height: calc(100% + 2*var(--veles-layout-padding));
+  margin: var(--veles-layout-padding-inverse);
+  width: calc(100% + 2*var(--veles-layout-padding));
+  overflow: hidden;
+
+  .roomsOverview {
+    flex-grow: 1;
+    flex-shrink: 1;
+    width: 100px;
+    padding: var(--veles-layout-padding);
+    transition: margin-right .25s;
+
+    &.leaveSpace {
+      margin-right: 400px;
+
+      @media(max-width: $slideOverBreakpoint) {
+        margin-right: 0;
+      }
+    }
+  }
+
+  .slideOver {
+    position: absolute;
+    top: 0;
+    right: -400px;
+    height: 100%;
+    width: 400px;
+    border-left: thin solid var(--veles-color-border);
+    transition: right .25s, border-left .25s, width .25s;
+
+    @media(max-width: $slideOverBreakpoint) {
+      width: 100%;
+      border-left: 0 solid var(--veles-color-border);
+      margin-right: 0;
+      right: -100%;
+    }
+
+    background-color: var(--veles-color-background);
+
+    &.active {
+      right: 0;
+    }
+
+    .slideOverContent {
+      padding: var(--veles-layout-padding);
+    }
+
+    .slideOverHeader {
+      display: flex;
+      border-bottom: thin solid var(--veles-color-border);
+      align-items: center;
+
+      >* {
+        padding: var(--veles-layout-padding-slim) var(--veles-layout-padding);
+      }
+
+      > span {
+        flex-grow: 1;
+      }
+
+      > button {
+        margin: 0;
+        background: transparent;
+        font: inherit;
+        color: inherit;
+        border: none;
+        cursor: pointer;
+      }
+    }
+  }
+}

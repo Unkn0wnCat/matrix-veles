@@ -1,6 +1,9 @@
 package model
 
-import "github.com/Unkn0wnCat/matrix-veles/internal/config"
+import (
+	"github.com/Unkn0wnCat/matrix-veles/internal/config"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Room struct {
 	ID                string             `json:"id"`
@@ -16,16 +19,10 @@ type Room struct {
 type HashCheckerConfig struct {
 	ChatNotice      bool            `json:"chatNotice"`
 	HashCheckMode   HashCheckerMode `json:"hashCheckMode"`
-	SubscribedLists []string        `json:"subscribedLists"`
+	SubscribedLists []*primitive.ObjectID
 }
 
 func MakeRoom(room *config.RoomConfig) *Room {
-	var subscribed []string
-
-	for _, subId := range room.HashChecker.SubscribedLists {
-		subscribed = append(subscribed, subId.Hex())
-	}
-
 	return &Room{
 		ID:              room.ID.Hex(),
 		Name:            room.Name,
@@ -37,7 +34,7 @@ func MakeRoom(room *config.RoomConfig) *Room {
 		HashCheckerConfig: &HashCheckerConfig{
 			ChatNotice:      room.HashChecker.NoticeToChat,
 			HashCheckMode:   AllHashCheckerMode[room.HashChecker.HashCheckMode],
-			SubscribedLists: subscribed,
+			SubscribedLists: room.HashChecker.SubscribedLists,
 		},
 	}
 }

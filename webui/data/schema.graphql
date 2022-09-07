@@ -40,7 +40,7 @@ enum HashCheckerMode {
 type HashCheckerConfig {
     chatNotice: Boolean!
     hashCheckMode: HashCheckerMode!
-    subscribedLists: [ID!]
+    subscribedLists(first: Int, after: String): ListConnection!
 }
 
 type Room {

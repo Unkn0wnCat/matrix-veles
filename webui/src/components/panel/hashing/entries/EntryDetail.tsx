@@ -1,68 +1,49 @@
-import React, {useContext, useEffect, useState} from "react";
+import React, {useContext, useEffect} from "react";
 import {PreloadedQuery, usePreloadedQuery} from "react-relay/hooks";
 import {graphql} from "babel-plugin-relay/macro";
-import {RoomDetailQuery, RoomDetailQuery$variables} from "./__generated__/RoomDetailQuery.graphql";
+import {EntryDetailQuery, EntryDetailQuery$variables} from "./__generated__/EntryDetailQuery.graphql";
 import {DisposeFn} from "relay-runtime";
-import {useNavigate, useParams} from "react-router-dom";
-import {RoomsSlideOverTitleContext} from "./Rooms";
-import ToggleButton from "../../form_components/ToggleButton";
+import {useParams} from "react-router-dom";
+import {EntriesSlideOverTitleContext} from "./Entries";
 
-import styles from "./RoomDetail.module.scss";
-import {useReconfigureRoomMutation} from "../../../mutations/ReconfigureRoomMutation";
-import {HashCheckerMode} from "../../../mutations/__generated__/ReconfigureRoomMutation.graphql";
-import {Trans, useTranslation} from "react-i18next";
+//import styles from "./EntryDetail.module.scss";
 
 type Props = {
-    initialQueryRef: PreloadedQuery<RoomDetailQuery> | null | undefined,
-    fetch: (variables: RoomDetailQuery$variables) => void
+    initialQueryRef: PreloadedQuery<EntryDetailQuery> | null | undefined,
+    fetch: (variables: EntryDetailQuery$variables) => void
     dispose: DisposeFn
 }
 
 type PropsFinal = {
-    initialQueryRef: PreloadedQuery<RoomDetailQuery>,
+    initialQueryRef: PreloadedQuery<EntryDetailQuery>,
 }
 
 const RoomDetailInner = ({initialQueryRef}: PropsFinal) => {
-    const [reconfigureRoom, reconfiguringRoom] = useReconfigureRoomMutation();
-    const [newAdminPowerLevel, setNewAdminPowerLevel] = useState<number|null>(null)
-    const {t} = useTranslation()
-    const navigate = useNavigate()
+    /*const {t} = useTranslation()
+    const navigate = useNavigate()*/
 
 
     const data = usePreloadedQuery(
             graphql`
-                query RoomDetailQuery($id: ID) {
-                    room(id:$id) {
+                query EntryDetailQuery($id: ID) {
+                    entry(id:$id) {
                         id
-                        active
-                        deactivated
-                        adminPowerLevel
-                        debug
-                        name
-                        roomId
-                        hashCheckerConfig {
-                            chatNotice
-                            hashCheckMode
-                            subscribedLists(first: 100) {
-                                edges {
-                                    node {
-                                        id
-                                        name
-                                    }
-                                }
-                            }
-                        }
+                        tags
                     }
                 }
             `,
             initialQueryRef
     )
 
-    const titleSetContext = useContext(RoomsSlideOverTitleContext)
+    const titleSetContext = useContext(EntriesSlideOverTitleContext)
 
-    titleSetContext && data.room?.name && titleSetContext(data.room.name);
+    titleSetContext && data.entry?.id && titleSetContext(data.entry.id);
 
     return <>
+       <pre>{JSON.stringify(data, null, 2)}</pre>
+    </>
+
+    /*return <>
         <ToggleButton name={"activeSwitch"} label={t("panel:rooms.detail.activate.label", {defaultValue: "Activate Room"})} labelSrOnly={false} onChange={(ev) => {
             reconfigureRoom({
                 variables: {
@@ -170,10 +151,10 @@ const RoomDetailInner = ({initialQueryRef}: PropsFinal) => {
                 </table>
             </div>
         </div>
-    </>
+    </>*/
 }
 
-const RoomDetail = ({initialQueryRef, fetch, dispose}: Props) => {
+const EntryDetail = ({initialQueryRef, fetch, dispose}: Props) => {
     const {id} = useParams()
 
     useEffect(() => {
@@ -187,4 +168,4 @@ const RoomDetail = ({initialQueryRef, fetch, dispose}: Props) => {
     return initialQueryRef ? <RoomDetailInner initialQueryRef={initialQueryRef} /> : null
 }
 
-export default RoomDetail;
+export default EntryDetail;

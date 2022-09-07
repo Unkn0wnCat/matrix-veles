@@ -1,0 +1,5 @@
+@import "../../../../globals";
+
+.roomsTableWrapper {
+  @include tableWrapper;
+}

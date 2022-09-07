@@ -18,6 +18,14 @@ import Rooms from "./components/panel/rooms/Rooms";
 import RoomsQueryGraphql, {RoomsQuery} from "./components/panel/rooms/__generated__/RoomsQuery.graphql";
 import RoomDetailQueryGraphql, {RoomDetailQuery} from "./components/panel/rooms/__generated__/RoomDetailQuery.graphql";
 import RoomDetail from "./components/panel/rooms/RoomDetail";
+import ListsQueryGraphql, {ListsQuery} from "./components/panel/hashing/lists/__generated__/ListsQuery.graphql";
+import ListDetailQueryGraphql, {ListDetailQuery} from "./components/panel/hashing/lists/__generated__/ListDetailQuery.graphql";
+import Lists from "./components/panel/hashing/lists/Lists";
+import ListDetail from "./components/panel/hashing/lists/ListDetail";
+import EntriesQueryGraphql, {EntriesQuery} from "./components/panel/hashing/entries/__generated__/EntriesQuery.graphql";
+import EntryDetailQueryGraphql, {EntryDetailQuery} from "./components/panel/hashing/entries/__generated__/EntryDetailQuery.graphql";
+import Entries from "./components/panel/hashing/entries/Entries";
+import EntryDetail from "./components/panel/hashing/entries/EntryDetail";
 
 function App() {
     const dispatch = useAppDispatch()
@@ -37,6 +45,22 @@ function App() {
             RoomDetailQueryGraphql
     )
 
+    const [listsInitialState, loadListsQuery, disposeListsQuery] = useQueryLoader<ListsQuery>(
+            ListsQueryGraphql
+    )
+
+    const [listDetailInitialState, loadListDetailQuery, disposeListDetailQuery] = useQueryLoader<ListDetailQuery>(
+            ListDetailQueryGraphql
+    )
+
+    const [entriesInitialState, loadEntriesQuery, disposeEntriesQuery] = useQueryLoader<EntriesQuery>(
+            EntriesQueryGraphql
+    )
+
+    const [entryDetailInitialState, loadEntryDetailQuery, disposeEntryDetailQuery] = useQueryLoader<EntryDetailQuery>(
+            EntryDetailQueryGraphql
+    )
+
     // This needs to be here to prevent a weird bug
     useTranslation()
 
@@ -50,13 +74,17 @@ function App() {
         if(auth.jwt !== null) {
             loadQuery({})
             loadRoomsQuery({})
+            loadListsQuery({})
+            loadEntriesQuery({})
             return
         }
 
         disposeQuery()
         disposeRoomsQuery()
+        disposeListsQuery()
+        disposeEntriesQuery()
         environment.getStore().notify(undefined, true)
-    }, [auth, disposeQuery, disposeRoomsQuery, environment, loadQuery, loadRoomsQuery])
+    }, [auth, disposeQuery, disposeRoomsQuery, environment, loadQuery, loadRoomsQuery, loadListsQuery, disposeListsQuery, loadEntriesQuery, disposeEntriesQuery])
 
 
     return (
@@ -70,11 +98,11 @@ function App() {
                 <Route path={"rooms"} element={<RequireAuth>{roomsInitialState && <Rooms initialQueryRef={roomsInitialState}/>}</RequireAuth>}>
                     <Route path={":id"} element={<RequireAuth><RoomDetail initialQueryRef={roomDetailInitialState} fetch={loadRoomDetailQuery} dispose={disposeRoomDetailQuery}/></RequireAuth>} />
                 </Route>
-                <Route path={"hashing/lists"} element={<RequireAuth><h1>lists</h1></RequireAuth>}>
-                    <Route path={":id"} element={<h1>list detail</h1>} />
+                <Route path={"hashing/lists"} element={<RequireAuth>{listsInitialState && <Lists initialQueryRef={listsInitialState}/>}</RequireAuth>}>
+                    <Route path={":id"} element={<RequireAuth><ListDetail initialQueryRef={listDetailInitialState} fetch={loadListDetailQuery} dispose={disposeListDetailQuery}/></RequireAuth>} />
                 </Route>
-                <Route path={"hashing/entries"} element={<RequireAuth><h1>entries</h1></RequireAuth>}>
-                    <Route path={":id"} element={<h1>entry detail</h1>} />
+                <Route path={"hashing/entries"} element={<RequireAuth>{entriesInitialState && <Entries initialQueryRef={entriesInitialState}/>}</RequireAuth>}>
+                    <Route path={":id"} element={<RequireAuth><EntryDetail initialQueryRef={entryDetailInitialState} fetch={loadEntryDetailQuery} dispose={disposeEntryDetailQuery}/></RequireAuth>} />
                 </Route>
             </Route>
         </Routes>

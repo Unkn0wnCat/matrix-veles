@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<58fc708823f0e42ade18c16f92c3b0d2>>
+ * @generated SignedSource<<1663469824a6a66c6959a37976f2a05e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,7 +25,14 @@ export type RoomDetailQuery$data = {
     readonly hashCheckerConfig: {
       readonly chatNotice: boolean;
       readonly hashCheckMode: HashCheckerMode;
-      readonly subscribedLists: ReadonlyArray<string> | null;
+      readonly subscribedLists: {
+        readonly edges: ReadonlyArray<{
+          readonly node: {
+            readonly id: string;
+            readonly name: string;
+          };
+        }>;
+      };
     };
   } | null;
 };
@@ -42,7 +49,21 @@ var v0 = [
     "name": "id"
   }
 ],
-v1 = [
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v3 = [
   {
     "alias": null,
     "args": [
@@ -57,13 +78,7 @@ v1 = [
     "name": "room",
     "plural": false,
     "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "id",
-        "storageKey": null
-      },
+      (v1/*: any*/),
       {
         "alias": null,
         "args": null,
@@ -92,13 +107,7 @@ v1 = [
         "name": "debug",
         "storageKey": null
       },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "name",
-        "storageKey": null
-      },
+      (v2/*: any*/),
       {
         "alias": null,
         "args": null,
@@ -130,10 +139,44 @@ v1 = [
           },
           {
             "alias": null,
-            "args": null,
-            "kind": "ScalarField",
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "first",
+                "value": 100
+              }
+            ],
+            "concreteType": "ListConnection",
+            "kind": "LinkedField",
             "name": "subscribedLists",
-            "storageKey": null
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "ListEdge",
+                "kind": "LinkedField",
+                "name": "edges",
+                "plural": true,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "List",
+                    "kind": "LinkedField",
+                    "name": "node",
+                    "plural": false,
+                    "selections": [
+                      (v1/*: any*/),
+                      (v2/*: any*/)
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": "subscribedLists(first:100)"
           }
         ],
         "storageKey": null
@@ -148,7 +191,7 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "RoomDetailQuery",
-    "selections": (v1/*: any*/),
+    "selections": (v3/*: any*/),
     "type": "Query",
     "abstractKey": null
   },
@@ -157,19 +200,19 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "RoomDetailQuery",
-    "selections": (v1/*: any*/)
+    "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "397376ecc93b3b405d66d01b7fd4de21",
+    "cacheID": "12bcb055f358f8be4fc522afa4daf9e3",
     "id": null,
     "metadata": {},
     "name": "RoomDetailQuery",
     "operationKind": "query",
-    "text": "query RoomDetailQuery(\n  $id: ID\n) {\n  room(id: $id) {\n    id\n    active\n    deactivated\n    adminPowerLevel\n    debug\n    name\n    roomId\n    hashCheckerConfig {\n      chatNotice\n      hashCheckMode\n      subscribedLists\n    }\n  }\n}\n"
+    "text": "query RoomDetailQuery(\n  $id: ID\n) {\n  room(id: $id) {\n    id\n    active\n    deactivated\n    adminPowerLevel\n    debug\n    name\n    roomId\n    hashCheckerConfig {\n      chatNotice\n      hashCheckMode\n      subscribedLists(first: 100) {\n        edges {\n          node {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "338b222f1e379335edc6847c401f52f5";
+(node as any).hash = "c5785d54de6de8e5986d7119f5dd7527";
 
 export default node;

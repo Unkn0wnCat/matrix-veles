@@ -136,6 +136,83 @@ func (r *entryResolver) Comments(ctx context.Context, obj *model.Entry, first *i
 	return ResolveComments(comments, first, after)
 }
 
+// SubscribedLists is the resolver for the subscribedLists field.
+func (r *hashCheckerConfigResolver) SubscribedLists(ctx context.Context, obj *model.HashCheckerConfig, first *int, after *string) (*model.ListConnection, error) {
+	ids := obj.SubscribedLists
+
+	if len(ids) == 0 {
+		return nil, nil
+	}
+
+	startIndex := 0
+
+	if after != nil {
+		afterInt := new(big.Int)
+		afterInt.SetString(*after, 16)
+
+		idInt := new(big.Int)
+
+		set := false
+
+		for i, id := range obj.SubscribedLists {
+			idInt.SetString(id.Hex(), 16)
+
+			if idInt.Cmp(afterInt) > 0 {
+				startIndex = i
+				set = true
+				break
+			}
+		}
+
+		if !set {
+			return nil, nil
+		}
+	}
+
+	if startIndex >= len(ids) {
+		return nil, nil
+	}
+
+	ids = ids[startIndex:]
+
+	length := 25
+
+	if first != nil {
+		length = *first
+	}
+
+	cut := false
+
+	if len(ids) > length {
+		cut = true
+		ids = ids[:length]
+	}
+
+	var edges []*model.ListEdge
+
+	for _, id := range ids {
+		dbList, err := db.GetListByID(*id)
+		if err != nil {
+			return nil, err
+		}
+
+		edges = append(edges, &model.ListEdge{
+			Node:   model.MakeList(dbList),
+			Cursor: dbList.ID.Hex(),
+		})
+	}
+
+	return &model.ListConnection{
+		PageInfo: &model.PageInfo{
+			HasPreviousPage: startIndex > 0,
+			HasNextPage:     cut,
+			StartCursor:     edges[0].Cursor,
+			EndCursor:       edges[len(edges)-1].Cursor,
+		},
+		Edges: edges,
+	}, nil
+}
+
 // Creator is the resolver for the creator field.
 func (r *listResolver) Creator(ctx context.Context, obj *model.List) (*model.User, error) {
 	user, err := db.GetUserByID(obj.CreatorID)
@@ -1359,6 +1436,11 @@ func (r *Resolver) Comment() generated.CommentResolver { return &commentResolver
 // Entry returns generated.EntryResolver implementation.
 func (r *Resolver) Entry() generated.EntryResolver { return &entryResolver{r} }
 
+// HashCheckerConfig returns generated.HashCheckerConfigResolver implementation.
+func (r *Resolver) HashCheckerConfig() generated.HashCheckerConfigResolver {
+	return &hashCheckerConfigResolver{r}
+}
+
 // List returns generated.ListResolver implementation.
 func (r *Resolver) List() generated.ListResolver { return &listResolver{r} }
 
@@ -1370,6 +1452,7 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type commentResolver struct{ *Resolver }
 type entryResolver struct{ *Resolver }
+type hashCheckerConfigResolver struct{ *Resolver }
 type listResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

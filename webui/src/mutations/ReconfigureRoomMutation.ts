@@ -23,7 +23,15 @@ const mutation = graphql`
             hashCheckerConfig {
                 chatNotice
                 hashCheckMode
-                subscribedLists
+                subscribedLists(first: 100) {
+                    edges {
+                        node {
+                            id
+                            name
+                            tags
+                        }
+                    }
+                }
             }
         }
     } 

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c6a0a35dc80ab80f3fc8e42c6fe8a0f6>>
+ * @generated SignedSource<<dc9c36fa6948f6592ee63829e7c07251>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -36,7 +36,15 @@ export type ReconfigureRoomMutation$data = {
     readonly hashCheckerConfig: {
       readonly chatNotice: boolean;
       readonly hashCheckMode: HashCheckerMode;
-      readonly subscribedLists: ReadonlyArray<string> | null;
+      readonly subscribedLists: {
+        readonly edges: ReadonlyArray<{
+          readonly node: {
+            readonly id: string;
+            readonly name: string;
+            readonly tags: ReadonlyArray<string> | null;
+          };
+        }>;
+      };
     };
   };
 };
@@ -53,7 +61,21 @@ var v0 = [
     "name": "reconfigureInput"
   }
 ],
-v1 = [
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v3 = [
   {
     "alias": null,
     "args": [
@@ -68,13 +90,7 @@ v1 = [
     "name": "reconfigureRoom",
     "plural": false,
     "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "id",
-        "storageKey": null
-      },
+      (v1/*: any*/),
       {
         "alias": null,
         "args": null,
@@ -89,13 +105,7 @@ v1 = [
         "name": "deactivated",
         "storageKey": null
       },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "name",
-        "storageKey": null
-      },
+      (v2/*: any*/),
       {
         "alias": null,
         "args": null,
@@ -141,10 +151,51 @@ v1 = [
           },
           {
             "alias": null,
-            "args": null,
-            "kind": "ScalarField",
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "first",
+                "value": 100
+              }
+            ],
+            "concreteType": "ListConnection",
+            "kind": "LinkedField",
             "name": "subscribedLists",
-            "storageKey": null
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "ListEdge",
+                "kind": "LinkedField",
+                "name": "edges",
+                "plural": true,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "List",
+                    "kind": "LinkedField",
+                    "name": "node",
+                    "plural": false,
+                    "selections": [
+                      (v1/*: any*/),
+                      (v2/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "tags",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": "subscribedLists(first:100)"
           }
         ],
         "storageKey": null
@@ -159,7 +210,7 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "ReconfigureRoomMutation",
-    "selections": (v1/*: any*/),
+    "selections": (v3/*: any*/),
     "type": "Mutation",
     "abstractKey": null
   },
@@ -168,19 +219,19 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "ReconfigureRoomMutation",
-    "selections": (v1/*: any*/)
+    "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "4186d7d18c6230e79d890ca0043dc104",
+    "cacheID": "0961d774133f607eb0b0145371e73f32",
     "id": null,
     "metadata": {},
     "name": "ReconfigureRoomMutation",
     "operationKind": "mutation",
-    "text": "mutation ReconfigureRoomMutation(\n  $reconfigureInput: RoomConfigUpdate!\n) {\n  reconfigureRoom(input: $reconfigureInput) {\n    id\n    active\n    deactivated\n    name\n    roomId\n    debug\n    adminPowerLevel\n    hashCheckerConfig {\n      chatNotice\n      hashCheckMode\n      subscribedLists\n    }\n  }\n}\n"
+    "text": "mutation ReconfigureRoomMutation(\n  $reconfigureInput: RoomConfigUpdate!\n) {\n  reconfigureRoom(input: $reconfigureInput) {\n    id\n    active\n    deactivated\n    name\n    roomId\n    debug\n    adminPowerLevel\n    hashCheckerConfig {\n      chatNotice\n      hashCheckMode\n      subscribedLists(first: 100) {\n        edges {\n          node {\n            id\n            name\n            tags\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e4ccf905922a56c92f44336d58c96a53";
+(node as any).hash = "9041b8d9fb6c1da957feb5f33ec8ac1b";
 
 export default node;

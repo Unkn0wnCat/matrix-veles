@@ -39,6 +39,7 @@ type Config struct {
 type ResolverRoot interface {
 	Comment() CommentResolver
 	Entry() EntryResolver
+	HashCheckerConfig() HashCheckerConfigResolver
 	List() ListResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
@@ -90,7 +91,7 @@ type ComplexityRoot struct {
 	HashCheckerConfig struct {
 		ChatNotice      func(childComplexity int) int
 		HashCheckMode   func(childComplexity int) int
-		SubscribedLists func(childComplexity int) int
+		SubscribedLists func(childComplexity int, first *int, after *string) int
 	}
 
 	List struct {
@@ -197,6 +198,9 @@ type EntryResolver interface {
 
 	AddedBy(ctx context.Context, obj *model.Entry) (*model.User, error)
 	Comments(ctx context.Context, obj *model.Entry, first *int, after *string) (*model.CommentConnection, error)
+}
+type HashCheckerConfigResolver interface {
+	SubscribedLists(ctx context.Context, obj *model.HashCheckerConfig, first *int, after *string) (*model.ListConnection, error)
 }
 type ListResolver interface {
 	Creator(ctx context.Context, obj *model.List) (*model.User, error)
@@ -402,7 +406,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.HashCheckerConfig.SubscribedLists(childComplexity), true
+		args, err := ec.field_HashCheckerConfig_subscribedLists_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.HashCheckerConfig.SubscribedLists(childComplexity, args["first"].(*int), args["after"].(*string)), true
 
 	case "List.comments":
 		if e.complexity.List.Comments == nil {
@@ -1081,7 +1090,7 @@ enum HashCheckerMode {
 type HashCheckerConfig {
     chatNotice: Boolean!
     hashCheckMode: HashCheckerMode!
-    subscribedLists: [ID!]
+    subscribedLists(first: Int, after: String): ListConnection!
 }
 
 type Room {
@@ -1434,6 +1443,30 @@ func (ec *executionContext) field_Entry_comments_args(ctx context.Context, rawAr
 }
 
 func (ec *executionContext) field_Entry_partOf_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_HashCheckerConfig_subscribedLists_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *int
@@ -3037,29 +3070,49 @@ func (ec *executionContext) _HashCheckerConfig_subscribedLists(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SubscribedLists, nil
+		return ec.resolvers.HashCheckerConfig().SubscribedLists(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.([]string)
+	res := resTmp.(*model.ListConnection)
 	fc.Result = res
-	return ec.marshalOID2ᚕstringᚄ(ctx, field.Selections, res)
+	return ec.marshalNListConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HashCheckerConfig_subscribedLists(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "HashCheckerConfig",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			switch field.Name {
+			case "pageInfo":
+				return ec.fieldContext_ListConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_ListConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ListConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_HashCheckerConfig_subscribedLists_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -10224,19 +10277,35 @@ func (ec *executionContext) _HashCheckerConfig(ctx context.Context, sel ast.Sele
 			out.Values[i] = ec._HashCheckerConfig_chatNotice(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "hashCheckMode":
 
 			out.Values[i] = ec._HashCheckerConfig_hashCheckMode(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "subscribedLists":
+			field := field
 
-			out.Values[i] = ec._HashCheckerConfig_subscribedLists(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HashCheckerConfig_subscribedLists(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11711,6 +11780,20 @@ func (ec *executionContext) marshalNList2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrix�
 		return graphql.Null
 	}
 	return ec._List(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNListConnection2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx context.Context, sel ast.SelectionSet, v model.ListConnection) graphql.Marshaler {
+	return ec._ListConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNListConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx context.Context, sel ast.SelectionSet, v *model.ListConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ListConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNListEdge2ᚕᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ListEdge) graphql.Marshaler {
