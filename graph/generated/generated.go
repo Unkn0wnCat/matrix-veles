@@ -1090,7 +1090,7 @@ enum HashCheckerMode {
 type HashCheckerConfig {
     chatNotice: Boolean!
     hashCheckMode: HashCheckerMode!
-    subscribedLists(first: Int, after: String): ListConnection!
+    subscribedLists(first: Int, after: String): ListConnection
 }
 
 type Room {
@@ -3077,14 +3077,11 @@ func (ec *executionContext) _HashCheckerConfig_subscribedLists(ctx context.Conte
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.ListConnection)
 	fc.Result = res
-	return ec.marshalNListConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx, field.Selections, res)
+	return ec.marshalOListConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HashCheckerConfig_subscribedLists(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10296,9 +10293,6 @@ func (ec *executionContext) _HashCheckerConfig(ctx context.Context, sel ast.Sele
 					}
 				}()
 				res = ec._HashCheckerConfig_subscribedLists(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			}
 
@@ -11780,20 +11774,6 @@ func (ec *executionContext) marshalNList2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrix�
 		return graphql.Null
 	}
 	return ec._List(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNListConnection2githubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx context.Context, sel ast.SelectionSet, v model.ListConnection) graphql.Marshaler {
-	return ec._ListConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNListConnection2ᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListConnection(ctx context.Context, sel ast.SelectionSet, v *model.ListConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ListConnection(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNListEdge2ᚕᚖgithubᚗcomᚋUnkn0wnCatᚋmatrixᚑvelesᚋgraphᚋmodelᚐListEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ListEdge) graphql.Marshaler {

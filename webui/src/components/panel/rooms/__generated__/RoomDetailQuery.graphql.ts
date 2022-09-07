@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1663469824a6a66c6959a37976f2a05e>>
+ * @generated SignedSource<<c14c33182e47290393ef64d7ea98a2d7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -32,7 +32,7 @@ export type RoomDetailQuery$data = {
             readonly name: string;
           };
         }>;
-      };
+      } | null;
     };
   } | null;
 };

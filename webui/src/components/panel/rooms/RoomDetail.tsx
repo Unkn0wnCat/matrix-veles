@@ -67,7 +67,7 @@ const RoomDetailInner = ({initialQueryRef}: PropsFinal) => {
             reconfigureRoom({
                 variables: {
                     reconfigureInput: {
-                        id: data.room?.id!,
+                        id: data.room!.id!,
                         deactivate: !ev.currentTarget.checked
                     }
                 }
@@ -78,7 +78,7 @@ const RoomDetailInner = ({initialQueryRef}: PropsFinal) => {
             reconfigureRoom({
                 variables: {
                     reconfigureInput: {
-                        id: data.room?.id!,
+                        id: data.room!.id!,
                         debug: ev.currentTarget.checked
                     }
                 }
@@ -103,7 +103,7 @@ const RoomDetailInner = ({initialQueryRef}: PropsFinal) => {
                 reconfigureRoom({
                     variables: {
                         reconfigureInput: {
-                            id: data.room?.id!,
+                            id: data.room!.id!,
                             adminPowerLevel: newAdminPowerLevel
                         }
                     }
@@ -120,7 +120,7 @@ const RoomDetailInner = ({initialQueryRef}: PropsFinal) => {
                     reconfigureRoom({
                         variables: {
                             reconfigureInput: {
-                                id: data.room?.id!,
+                                id: data.room!.id!,
                                 hashChecker: {
                                     chatNotice: ev.currentTarget.checked
                                 }
@@ -134,7 +134,7 @@ const RoomDetailInner = ({initialQueryRef}: PropsFinal) => {
                     reconfigureRoom({
                         variables: {
                             reconfigureInput: {
-                                id: data.room?.id!,
+                                id: data.room!.id!,
                                 hashChecker: {
                                     hashCheckMode: ev.currentTarget.value as HashCheckerMode
                                 }
@@ -159,7 +159,7 @@ const RoomDetailInner = ({initialQueryRef}: PropsFinal) => {
                     </thead>
                     <tbody>
                     {
-                        data.room?.hashCheckerConfig.subscribedLists.edges.map((edge) => {
+                        data.room?.hashCheckerConfig.subscribedLists?.edges.map((edge) => {
                             return <tr onClick={() => {navigate("/hashing/lists/"+edge.node.id)}} key={edge.node.id}>
                                 <td>{edge.node.name}</td>
                                 <td>{edge.node.id}</td>

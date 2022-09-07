@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dc9c36fa6948f6592ee63829e7c07251>>
+ * @generated SignedSource<<0e26637d8a4933e2cfcb7d11667fc67c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -44,7 +44,7 @@ export type ReconfigureRoomMutation$data = {
             readonly tags: ReadonlyArray<string> | null;
           };
         }>;
-      };
+      } | null;
     };
   };
 };
