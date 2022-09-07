@@ -26,7 +26,7 @@ func ServeUI() (http.Handler, error) {
 
 	staticServer := http.FileServer(http.FS(fSys))
 
-	serveIndex, err := ServeIndex()
+	myServeIndex, err := serveIndex()
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func ServeUI() (http.Handler, error) {
 		_, err := fSys.Open(strings.TrimPrefix(path.Clean(r.URL.Path), "/"))
 		if err != nil {
 			log.Println(err)
-			serveIndex.ServeHTTP(w, r)
+			myServeIndex.ServeHTTP(w, r)
 			return
 		}
 		log.Println("serving static")
