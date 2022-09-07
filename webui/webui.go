@@ -43,7 +43,7 @@ func ServeUI() (http.Handler, error) {
 	}), nil
 }
 
-func ServeIndex() (http.HandlerFunc, error) {
+func serveIndex() (http.HandlerFunc, error) {
 	indexFile, err := content.ReadFile("build/index.html")
 	if err != nil {
 		return nil, err
