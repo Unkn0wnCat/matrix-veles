@@ -1,35 +1,5 @@
 @import "../../../globals";
 
 .roomsTableWrapper {
-  width: 100%;
-  overflow-y: scroll;
-
-  .roomsTable {
-    width: 100%;
-
-    text-align: left;
-
-    white-space: nowrap;
-    border-spacing: 0;
-    border-collapse: collapse;
-
-    th, td {
-      padding: 10px 5px;
-    }
-
-    thead tr {
-      border-bottom: thin solid var(--veles-color-border-highlight);
-    }
-
-    tbody tr {
-      cursor:pointer;
-      border-bottom: thin solid var(--veles-color-border);
-
-      @include badges;
-
-      &:hover {
-        background: var(--veles-color-surface);
-      }
-    }
-  }
+  @include tableWrapper;
 }

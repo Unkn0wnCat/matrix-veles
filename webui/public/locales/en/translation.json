@@ -1,4 +1,7 @@
 {
+  "common": {
+    "loading": "Loading..."
+  },
   "list": {
     "none": "No entries",
     "loading": "Loading more entries...",
@@ -18,8 +21,8 @@
     "debug": "Debug",
     "inactive": "Inactive",
     "active": "Active",
-    "title": "My Rooms",
     "details": "Details",
+    "title": "My Rooms",
     "name": "Name",
     "id": "Room ID"
   }

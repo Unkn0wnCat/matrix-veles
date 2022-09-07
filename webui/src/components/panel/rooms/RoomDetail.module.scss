@@ -4,3 +4,44 @@
   display: flex;
   gap: var(--veles-layout-padding)
 }
+
+.label {
+  display: block;
+  padding: var(--veles-layout-padding-slim);
+}
+
+.powerLevelInput {
+  @include inputGroup;
+
+  input {
+    flex-grow: 1;
+  }
+}
+
+.hashCheckModeChooser {
+  @include input;
+  width: 100%;
+}
+
+.listTable {
+  @include tableWrapper;
+  padding: var(--veles-layout-padding);
+}
+
+.settingsGroup {
+  display: block;
+  margin: var(--veles-layout-padding) var(--veles-layout-padding-inverse);
+
+  border-top: thin solid var(--veles-color-border);
+  border-bottom: thin solid var(--veles-color-border);
+
+  .settingsGroupTitle {
+    display: block;
+    border-bottom: thin solid var(--veles-color-border);
+    padding: var(--veles-layout-padding-slim) var(--veles-layout-padding);
+  }
+
+  .settingsGroupContent {
+    padding: var(--veles-layout-padding);
+  }
+}

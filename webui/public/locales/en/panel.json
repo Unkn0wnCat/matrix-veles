@@ -1,4 +1,41 @@
 {
+  "rooms": {
+    "detail": {
+      "activate": {
+        "label": "Activate Room"
+      },
+      "debug": {
+        "label": "Debug-Mode"
+      },
+      "adminPowerLevel": {
+        "label": "Admin-Power Level"
+      },
+      "set": {
+        "label": "Set"
+      },
+      "hashChecker": {
+        "label": "Hash-Checker",
+        "notice": {
+          "label": "Send Notice to Chat"
+        },
+        "hashCheckMode": {
+          "label": "Behaviour on Match",
+          "NOTICE": {
+            "label": "Only send a Notice"
+          },
+          "DELETE": {
+            "label": "Delete the Message"
+          },
+          "MUTE": {
+            "label": "Mute User & Delete"
+          },
+          "BAN": {
+            "label": "Ban User & Delete"
+          }
+        }
+      }
+    }
+  },
   "jump_to_content": "Jump to Content",
   "jump_to_navigation": "Jump to Navigation",
   "documentation": "Documentation",

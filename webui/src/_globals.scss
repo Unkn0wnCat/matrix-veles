@@ -83,3 +83,89 @@
     }
   }
 }
+
+@mixin inputGroup {
+  display: flex;
+
+  input, button {
+    @include input;
+  }
+
+  > input, > button {
+    border-radius: 0;
+
+    &:first-child {
+      border-radius: var(--veles-layout-border-radius) 0 0 var(--veles-layout-border-radius);
+    }
+    &:last-child {
+      border-radius: 0 var(--veles-layout-border-radius) var(--veles-layout-border-radius) 0;
+    }
+
+    &:not(:first-child) {
+      border-left: none;
+    }
+    &:not(:first-child) {
+      border-left: none;
+    }
+  }
+}
+
+@mixin tableWrapper {
+  width: 100%;
+  overflow-y: scroll;
+
+  table {
+    width: 100%;
+
+    text-align: left;
+
+    white-space: nowrap;
+    border-spacing: 0;
+    border-collapse: collapse;
+
+    th, td {
+      padding: 10px 5px;
+    }
+
+    thead tr {
+      border-bottom: thin solid var(--veles-color-border-highlight);
+    }
+
+    tbody tr {
+      cursor:pointer;
+      border-bottom: thin solid var(--veles-color-border);
+
+      @include badges;
+
+      &:hover {
+        background: var(--veles-color-surface);
+      }
+    }
+  }
+}
+
+@mixin input {
+  padding: var(--veles-layout-padding-slim) var(--veles-layout-padding);
+  border: thin solid var(--veles-color-border);
+  border-radius: var(--veles-layout-border-radius);
+  background-color: var(--veles-color-background);
+  color: var(--veles-color-foreground);
+  transition: 250ms;
+  font: inherit;
+  display: block;
+
+  &:focus {
+    outline: 2px solid var(--veles-color-accent);
+    outline: 2px auto -webkit-focus-ring-color;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: .75;
+    cursor: not-allowed;
+  }
+}
+
+@mixin settingsGroup {
+
+}

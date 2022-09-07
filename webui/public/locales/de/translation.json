@@ -1,4 +1,7 @@
 {
+  "common": {
+    "loading": "Lädt..."
+  },
   "list": {
     "none": "Keine Einträge",
     "loading": "Lade weitere Einträge...",
@@ -18,8 +21,8 @@
     "debug": "Debug",
     "inactive": "Inaktiv",
     "active": "Aktiv",
-    "title": "Meine Räume",
     "details": "Details",
+    "title": "Meine Räume",
     "name": "Name",
     "id": "ID"
   }

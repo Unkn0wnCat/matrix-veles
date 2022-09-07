@@ -1,4 +1,41 @@
 {
+  "rooms": {
+    "detail": {
+      "activate": {
+        "label": "Raum Aktivieren"
+      },
+      "debug": {
+        "label": "Debug-Modus"
+      },
+      "adminPowerLevel": {
+        "label": "Admin-Powerlevel"
+      },
+      "set": {
+        "label": "Ok"
+      },
+      "hashChecker": {
+        "label": "Hash-Prüfer",
+        "notice": {
+          "label": "Nachricht in den Chat senden"
+        },
+        "hashCheckMode": {
+          "label": "Verhalten bei Übereinstimmung",
+          "NOTICE": {
+            "label": "Nur Nachricht senden"
+          },
+          "DELETE": {
+            "label": "Nachricht löschen"
+          },
+          "MUTE": {
+            "label": "Stummschalten & Löschen"
+          },
+          "BAN": {
+            "label": "Verbannen & Löschen"
+          }
+        }
+      }
+    }
+  },
   "jump_to_content": "Zum Inhalt springen",
   "jump_to_navigation": "Zur Navigation springen",
   "documentation": "Dokumentation",
