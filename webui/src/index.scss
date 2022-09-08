@@ -20,6 +20,7 @@ html, body, #root {
 
 :root {
   --veles-color-background: #0d0d0d;
+  --veles-color-background-transparent: #0d0d0df0;
   --veles-color-foreground: #fff;
   --veles-color-border: #1c1c1c;
   --veles-color-border-highlight: #464646;
@@ -41,6 +42,7 @@ html, body, #root {
 @media(prefers-color-scheme: light) {
   :root {
     --veles-color-background: #f2f2f2;
+    --veles-color-background-transparent: #f2f2f2f0;
     --veles-color-foreground: #0d0d0d;
     --veles-color-border: #cccccc;
     --veles-color-border-highlight: #9b9b9b;

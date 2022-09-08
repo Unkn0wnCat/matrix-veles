@@ -2,6 +2,98 @@
 
 $slideOverBreakpoint: 1000px;
 
+.modalOuter {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  background-color: var(--veles-color-background-transparent);
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity .25s;
+
+  &.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modalTitle {
+    font-size: 1.5em;
+    font-weight: 700;
+  }
+
+  .uploader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    max-width: 800px;
+    max-height: 700px;
+    transform: translate(-50%, -50%);
+    background-color: var(--veles-color-background);
+    padding: var(--veles-layout-padding);
+    border: thin solid var(--veles-color-border);
+    border-radius: var(--veles-layout-border-radius);
+    overflow: hidden;
+
+    .dropArea {
+      height: 200px;
+      border: 5px dashed var(--veles-color-border);
+      position: relative;
+
+      .dropAreaContent {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        text-align: center;
+        justify-content: center;
+        align-items: center;
+
+        transform: translate(-50%, -50%);
+
+        display: flex;
+        flex-direction: column;
+      }
+    }
+
+    .fileList {
+      display: flex;
+      flex-direction: column;
+      margin-top: var(--veles-layout-padding);
+
+      > span {
+        text-align: center;
+        opacity: .75;
+        padding: var(--veles-layout-padding-slim) var(--veles-layout-padding);
+      }
+
+      .file {
+        display: flex;
+        padding: var(--veles-layout-padding-slim) var(--veles-layout-padding);
+        border-bottom: thin solid var(--veles-color-border);
+
+        .fileName {
+          flex-grow: 1;
+        }
+
+        .fileHash {
+          width: 200px;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          white-space: nowrap;
+
+        }
+      }
+    }
+  }
+}
+
+
 .roomsContainer {
   display: flex;
   height: calc(100% + 2*var(--veles-layout-padding));
